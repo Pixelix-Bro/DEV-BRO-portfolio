@@ -27,7 +27,7 @@ function Navbar() {
       <div className="text-white w-full !max-w-[1300px] flex items-center justify-between px-5">
         <Link href="/">
           <img
-            src="/fovicon.png"
+            src="./favicon.png"
             alt="Logo"
             width={60}
             className=" sm:w-16 cursor-pointer py-3 backdrop-blur-md bg-white/5 border border-white/20 rounded-2xl shadow-xl p-[10px]"
