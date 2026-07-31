@@ -89,7 +89,7 @@ export const metadata = {
       'Pixelix — zamonaviy veb-saytlar va ilovalar yaratuvchi dasturchi portfolio sahifasi.',
     images: [
       {
-        url: '/og-banner.png',
+        url: './og-banner.png',
         width: 1200,
         height: 630,
         alt: 'Pixelix — Portfolio',
