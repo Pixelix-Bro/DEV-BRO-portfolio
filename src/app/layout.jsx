@@ -69,11 +69,21 @@ export const metadata = {
 
   icons: {
     icon: [
-      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: ['/favicon.png'],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: ['/favicon.ico'],
+    apple: [
+      { url: '/icon-120x120.png', sizes: '120x120', type: 'image/png' },
+      { url: '/icon-152x152.png', sizes: '152x152', type: 'image/png' },
+      { url: '/icon-167x167.png', sizes: '167x167', type: 'image/png' },
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [{ rel: 'mask-icon', url: '/logo.png', color: '#7C3AED' }],
   },
 
   manifest: '/site.webmanifest',
@@ -89,7 +99,9 @@ export const metadata = {
       'Pixelix — zamonaviy veb-saytlar va ilovalar yaratuvchi dasturchi portfolio sahifasi.',
     images: [
       {
-        url: './og-banner.png',
+        // MUHIM: nisbiy './og-banner.png' emas, to'liq URL bo'lishi kerak,
+        // aks holda Telegram/Facebook kabi platformalar rasmni topa olmaydi.
+        url: `${siteUrl}/og-banner.png`,
         width: 1200,
         height: 630,
         alt: 'Pixelix — Portfolio',
@@ -104,7 +116,7 @@ export const metadata = {
     title: 'Pixelix — Portfolio & Web Development',
     description:
       'Pixelix — zamonaviy veb-saytlar va ilovalar yaratuvchi dasturchi portfolio sahifasi.',
-    images: ['/og-banner.png'],
+    images: [`${siteUrl}/og-banner.png`],
   },
 
   robots: {
