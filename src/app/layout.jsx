@@ -6,6 +6,7 @@ import './globals.css'
 import Navbar from './Navbar/Navbar'
 
 const siteUrl = 'https://pixelix.uz'
+const authorName = 'Ubaydulloh Dadaxanov'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,9 +37,10 @@ export const metadata = {
     template: '%s | Pixelix',
   },
   description:
-    "Pixelix — zamonaviy veb-saytlar va ilovalar yaratuvchi dasturchi portfolio sahifasi. Loyihalar, ko'nikmalar va bog'lanish uchun ma'lumotlar.",
+    "Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi. React, Next.js va fullstack loyihalar, ko'nikmalar va bog'lanish ma'lumotlari.",
   keywords: [
     'Pixelix',
+    'Ubaydulloh Dadaxanov',
     'portfolio',
     'web developer',
     'frontend developer',
@@ -57,9 +59,9 @@ export const metadata = {
   category: 'technology',
   classification: 'Portfolio',
 
-  authors: [{ name: 'Pixelix', url: siteUrl }],
-  creator: 'Pixelix',
-  publisher: 'Pixelix',
+  authors: [{ name: authorName, url: siteUrl }],
+  creator: authorName,
+  publisher: authorName,
 
   formatDetection: {
     email: false,
@@ -96,7 +98,7 @@ export const metadata = {
     siteName: 'Pixelix',
     title: 'Pixelix — Portfolio & Web Development',
     description:
-      'Pixelix — zamonaviy veb-saytlar va ilovalar yaratuvchi dasturchi portfolio sahifasi.',
+      'Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.',
     images: [
       {
         // MUHIM: nisbiy './og-banner.png' emas, to'liq URL bo'lishi kerak,
@@ -104,7 +106,8 @@ export const metadata = {
         url: `${siteUrl}/og-banner.png`,
         width: 1200,
         height: 630,
-        alt: 'Pixelix — Portfolio',
+        alt: 'Pixelix — Portfolio & Web Development',
+        type: 'image/png',
       },
     ],
   },
@@ -115,8 +118,13 @@ export const metadata = {
     creator: '@pixelix',
     title: 'Pixelix — Portfolio & Web Development',
     description:
-      'Pixelix — zamonaviy veb-saytlar va ilovalar yaratuvchi dasturchi portfolio sahifasi.',
-    images: [`${siteUrl}/og-banner.png`],
+      'Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.',
+    images: [
+      {
+        url: `${siteUrl}/og-banner.png`,
+        alt: 'Pixelix — Portfolio & Web Development',
+      },
+    ],
   },
 
   robots: {
@@ -139,6 +147,7 @@ export const metadata = {
       'uz-UZ': siteUrl,
       'en-US': `${siteUrl}/en`,
       'ru-RU': `${siteUrl}/ru`,
+      'x-default': siteUrl,
     },
   },
 
@@ -147,9 +156,8 @@ export const metadata = {
     title: 'Pixelix',
     statusBarStyle: 'black-translucent',
   },
-
   verification: {
-    google: 'google-site-verification-kodingiz',
+    google: 'FaHcjtLEfbXFTu0cGOo0h-XP8DvASdtFqo3EXieANak',
     yandex: 'yandex-verification-kodingiz',
   },
 
@@ -161,14 +169,17 @@ const jsonLd = {
   '@type': 'ProfilePage',
   mainEntity: {
     '@type': 'Person',
-    name: 'Pixelix',
+    name: authorName,
+    alternateName: 'Pixelix',
     url: siteUrl,
     image: `${siteUrl}/logo.png`,
     jobTitle: 'Web Developer',
+    knowsAbout: ['React', 'Next.js', 'Frontend Development', 'Fullstack Development'],
     sameAs: [
       'https://github.com/Pixelix-Bro',
       'https://t.me/Pixeelix',
       'https://www.instagram.com/pixelixbro/',
+      'https://www.linkedin.com/in/ubaydulloh-dadahanov',
     ],
   },
 }
