@@ -30,10 +30,7 @@ function page() {
         <div className="flex flex-col lg:items-start items-center lg:gap-[40px] gap-[20px]">
           <div className=" flex flex-col lg:items-start items-center w-[70%]">
             <p className=" title text-white lg:text-[60px] md:text-[50px] text-[20px] font-medium lg:text-start text-center">
-              Hi I'm{" "}
-              <span className="text-gray-400 font-bold">
-                Dadaxanov Ubaydulloh
-              </span>
+              Hi I'm <span className="text-gray-400 font-bold">Dadaxanov Ubaydulloh</span>
             </p>
             <p className="title hidden sm:inline font-sans text-white lg:text-[20px] md:text-[24px] text-[20px]">
               {`I am a Full-Stack Developer specializing in JavaScript. My
@@ -44,13 +41,13 @@ with clean, maintainable code and a great user experience.`}
           </div>
           <div className="flex gap-[20px] title">
             <Link
-              href={"/about"}
+              href={'/about'}
               className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 pl-[40px] pr-[40px] flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
               <Info /> About
             </Link>
             <Link
-              href={"/projects"}
+              href={'/projects'}
               className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200  pl-[40px] pr-[40px]  flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
               <Code2 /> Projects
@@ -66,7 +63,7 @@ with clean, maintainable code and a great user experience.`}
           <div className="flex gap-[20px] lg:flex-nowrap flex-wrap justify-center">
             <div className="ong">
               <Link
-                href={"https://github.com/DEV-BR0"}
+                href={'https://github.com/Pixelix-Bro'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className=" backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
@@ -77,7 +74,7 @@ with clean, maintainable code and a great user experience.`}
             </div>
             <div className="ong">
               <Link
-                href={"https://www.linkedin.com/in/ubaydulloh-dadahanov"}
+                href={'https://www.linkedin.com/in/ubaydulloh-dadahanov'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className=" backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
@@ -88,7 +85,7 @@ with clean, maintainable code and a great user experience.`}
             </div>
             <div className="ong">
               <Link
-                href={"https://t.me/DEV_BR0"}
+                href={'https://t.me/Pixeelix'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className=" backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
@@ -101,7 +98,7 @@ with clean, maintainable code and a great user experience.`}
         </div>
       </div>
     </>
-  );
+  )
 }
 
 export default page;
