@@ -1,100 +1,65 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import Link from 'next/link'
+import { VeloreGlass, VeloreModal } from 'velore'
+import 'velore/velore.css'
 
 const links = [
-  { title: "Home", href: "/" },
-  { title: "About", href: "/about" },
-  { title: "Projects", href: "/projects" },
-  { title: "Contact", href: "/contact" },
-];
+  { title: 'Home', href: '/' },
+  { title: 'About', href: '/about' },
+  { title: 'Projects', href: '/projects' },
+  { title: 'Contact', href: '/contact' },
+]
 
 function Bars({ modal, setModal }) {
-  const overlayRef = useRef(null);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    if (modal) {
-      gsap.set(overlayRef.current, {
-        display: "flex",
-      });
-
-      const tl = gsap.timeline();
-
-      tl.fromTo(
-        overlayRef.current,
-        {
-          opacity: 0,
-        },
-        {
-          opacity: 1,
-          duration: 0.25,
-        },
-      ).fromTo(
-        menuRef.current,
-        {
-          x: "100%",
-        },
-        {
-          x: 0,
-          duration: 0.5,
-          ease: "power4.out",
-        },
-        "-=0.1",
-      );
-    } else {
-      const tl = gsap.timeline();
-
-      tl.to(menuRef.current, {
-        x: "100%",
-        duration: 0.4,
-        ease: "power4.in",
-      }).to(
-        overlayRef.current,
-        {
-          opacity: 0,
-          duration: 0.25,
-          onComplete: () => {
-            gsap.set(overlayRef.current, {
-              display: "none",
-            });
-          },
-        },
-        "-=0.2",
-      );
-    }
-  }, [modal]);
+  if (!modal) return null
 
   return (
-    <div
-      ref={overlayRef}
+    <VeloreModal
       onClick={() => setModal(false)}
-      className="fixed inset-0 z-50 hidden justify-end bg-black/40 backdrop-blur-sm"
+      className="!fixed !inset-0 !z-50 !flex !max-w-none !items-stretch !justify-end !rounded-none !border-0 !bg-transparent !p-0 !shadow-none"
     >
-      <div
-        ref={menuRef}
-        onClick={(e) => e.stopPropagation()}
-        className="h-screen w-[70%] bg-black backdrop-blur-2xl border-l border-white/20 p-6 text-white"
-      >
-        <img src="/favicon.ico" className="w-24 mx-auto mb-10" alt="logo" />
+      {/* Orqa dim */}
+      <div className="absolute inset-0 bg-black/40" onClick={() => setModal(false)} />
 
-        <div className="flex flex-col gap-5">
+      {/* TO'LIQ glass menu */}
+      <VeloreGlass
+        variant="liquid"
+        dark
+        onClick={(e) => e.stopPropagation()}
+        className="
+          relative z-10
+          !flex h-full w-[75%] max-w-sm !flex-col
+          !rounded-none
+          border-l border-white/25
+          !p-6 text-white
+          !bg-white/10
+          !backdrop-blur-2xl
+          !shadow-[0_0_40px_rgba(0,0,0,0.4)]
+        "
+        style={{
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          background: 'rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <img src="/favicon.ico" className="mx-auto mb-10 w-20" alt="logo" />
+
+        <nav className="flex flex-col gap-2">
           {links.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setModal(false)}
-              className="rounded-xl p-3 hover:bg-white/10 transition"
+              className="rounded-xl px-4 py-3 text-lg transition hover:bg-white/15"
             >
               {item.title}
             </Link>
           ))}
-        </div>
-      </div>
-    </div>
-  );
+        </nav>
+      </VeloreGlass>
+    </VeloreModal>
+  )
 }
 
-export default Bars;
+export default Bars

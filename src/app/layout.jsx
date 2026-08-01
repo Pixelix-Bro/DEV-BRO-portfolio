@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import ContourBackground from './backgraund'
 import './globals.css'
 import Navbar from './Navbar/Navbar'
+import 'velore/velore.css'
 
 const siteUrl = 'https://pixelix.uz'
 const authorName = 'Ubaydulloh Dadaxanov'
