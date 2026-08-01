@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 function page() {
   useEffect(() => {
-    document.title = "DEV-BRO | Home";
+    document.title = "Pixelix-Bro | Home";
   }, []);
 
   useGSAP(() => {

@@ -40,7 +40,7 @@ function page() {
   }, []);
 
   useEffect(() => {
-    document.title = "DEV-BRO | About";
+    document.title = "Pixelix | About";
   }, []);
 
   return (

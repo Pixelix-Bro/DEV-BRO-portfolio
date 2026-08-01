@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import { useEffect } from "react";
 function page() {
   useEffect(() => {
-    document.title = "DEV-BRO | Projects";
+    document.title = "Pixelix-Bro | Projects";
   });
 
   return (

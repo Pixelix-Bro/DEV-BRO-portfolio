@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 function page() {
   useEffect(() => {
-    document.title = "DEV-BRO | Contact";
+    document.title = "PIxelix-Bro | Contact";
   });
 
   useGSAP(() => {
