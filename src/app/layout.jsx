@@ -1,3 +1,4 @@
+import type { Metadata, Viewport } from 'next'
 import 'aos/dist/aos.css'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
@@ -8,6 +9,7 @@ import 'velore/velore.css'
 
 const siteUrl = 'https://pixelix.uz'
 const authorName = 'Ubaydulloh Dadaxanov'
+const siteName = 'Pixelix'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,7 +21,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -30,9 +32,8 @@ export const viewport = {
   colorScheme: 'dark light',
 }
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-
   title: {
     default: 'Pixelix — Portfolio & Web Development',
     template: '%s | Pixelix',
@@ -53,23 +54,21 @@ export const metadata = {
     'Tashkent developer',
     'React developer',
     'Next.js developer',
+    'TypeScript',
+    'Tailwind CSS',
   ],
-
-  applicationName: 'Pixelix',
+  applicationName: siteName,
   generator: 'Next.js',
   category: 'technology',
   classification: 'Portfolio',
-
   authors: [{ name: authorName, url: siteUrl }],
   creator: authorName,
   publisher: authorName,
-
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
@@ -79,32 +78,34 @@ export const metadata = {
       { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: ['/favicon.ico'],
+    shortcut: '/favicon.ico',
     apple: [
       { url: '/icon-120x120.png', sizes: '120x120', type: 'image/png' },
       { url: '/icon-152x152.png', sizes: '152x152', type: 'image/png' },
       { url: '/icon-167x167.png', sizes: '167x167', type: 'image/png' },
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
-    other: [{ rel: 'mask-icon', url: '/logo.png', color: '#7C3AED' }],
+    other: [
+      {
+        rel: 'mask-icon',
+        url: '/logo.png',
+        color: '#7C3AED',
+      },
+    ],
   },
-
   manifest: '/site.webmanifest',
-
   openGraph: {
     type: 'website',
     locale: 'uz_UZ',
     alternateLocale: ['en_US', 'ru_RU'],
     url: siteUrl,
-    siteName: 'Pixelix',
+    siteName: siteName,
     title: 'Pixelix — Portfolio & Web Development',
     description:
       'Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.',
     images: [
       {
-        // MUHIM: nisbiy './og-banner.png' emas, to'liq URL bo'lishi kerak,
-        // aks holda Telegram/Facebook kabi platformalar rasmni topa olmaydi.
-        url: `${siteUrl}/og-banner.png`,
+        url: '/og-banner.png', // metadataBase bilan to‘liq URL ga aylanadi
         width: 1200,
         height: 630,
         alt: 'Pixelix — Portfolio & Web Development',
@@ -112,7 +113,6 @@ export const metadata = {
       },
     ],
   },
-
   twitter: {
     card: 'summary_large_image',
     site: '@pixelix',
@@ -122,12 +122,11 @@ export const metadata = {
       'Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.',
     images: [
       {
-        url: `${siteUrl}/og-banner.png`,
+        url: '/og-banner.png',
         alt: 'Pixelix — Portfolio & Web Development',
       },
     ],
   },
-
   robots: {
     index: true,
     follow: true,
@@ -141,7 +140,6 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
-
   alternates: {
     canonical: siteUrl,
     languages: {
@@ -151,50 +149,81 @@ export const metadata = {
       'x-default': siteUrl,
     },
   },
-
   appleWebApp: {
     capable: true,
-    title: 'Pixelix',
+    title: siteName,
     statusBarStyle: 'black-translucent',
   },
   verification: {
     google: 'FaHcjtLEfbXFTu0cGOo0h-XP8DvASdtFqo3EXieANak',
-    yandex: 'yandex-verification-kodingiz',
+    // yandex: 'haqiqiy-yandex-verification-kodingizni-qo‘ying', // faqat haqiqiy kod bilan oching
   },
-
   referrer: 'origin-when-cross-origin',
 }
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ProfilePage',
+  '@id': `${siteUrl}/#profilepage`,
+  url: siteUrl,
+  name: `${authorName} — Pixelix`,
+  description:
+    "Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.",
+  inLanguage: 'uz-UZ',
   mainEntity: {
     '@type': 'Person',
+    '@id': `${siteUrl}/#person`,
     name: authorName,
-    alternateName: 'Pixelix',
+    alternateName: ['Pixelix', 'Pixelix Bro'],
     url: siteUrl,
     image: `${siteUrl}/logo.png`,
-    jobTitle: 'Web Developer',
-    knowsAbout: ['React', 'Next.js', 'Frontend Development', 'Fullstack Development'],
+    jobTitle: 'Web Developer / Fullstack Developer',
+    description:
+      'React, Next.js va zamonaviy texnologiyalar asosida veb-saytlar va ilovalar yaratuvchi dasturchi. Toshkent, O‘zbekiston.',
+    knowsAbout: [
+      'React',
+      'Next.js',
+      'TypeScript',
+      'Frontend Development',
+      'Fullstack Development',
+      'Tailwind CSS',
+      'Node.js',
+    ],
     sameAs: [
       'https://github.com/Pixelix-Bro',
       'https://t.me/Pixeelix',
       'https://www.instagram.com/pixelixbro/',
       'https://www.linkedin.com/in/ubaydulloh-dadahanov',
     ],
+    nationality: {
+      '@type': 'Country',
+      name: 'Uzbekistan',
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Tashkent',
+      addressCountry: 'UZ',
+    },
   },
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="uz" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="uz"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col items-center justify-center contenr bg-black ">
+      <body className="min-h-full flex flex-col items-center justify-center bg-black">
         <Toaster position="top-center" />
         <ContourBackground />
         <Navbar />
