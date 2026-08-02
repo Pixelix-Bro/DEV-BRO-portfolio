@@ -1,4 +1,3 @@
-import type { Metadata, Viewport } from 'next'
 import 'aos/dist/aos.css'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
@@ -21,7 +20,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const viewport: Viewport = {
+export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -32,7 +31,7 @@ export const viewport: Viewport = {
   colorScheme: 'dark light',
 }
 
-export const metadata: Metadata = {
+export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: 'Pixelix — Portfolio & Web Development',
@@ -54,7 +53,6 @@ export const metadata: Metadata = {
     'Tashkent developer',
     'React developer',
     'Next.js developer',
-    'TypeScript',
     'Tailwind CSS',
   ],
   applicationName: siteName,
@@ -99,13 +97,13 @@ export const metadata: Metadata = {
     locale: 'uz_UZ',
     alternateLocale: ['en_US', 'ru_RU'],
     url: siteUrl,
-    siteName: siteName,
+    siteName,
     title: 'Pixelix — Portfolio & Web Development',
     description:
       'Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.',
     images: [
       {
-        url: '/og-banner.png', // metadataBase bilan to‘liq URL ga aylanadi
+        url: '/og-banner.png',
         width: 1200,
         height: 630,
         alt: 'Pixelix — Portfolio & Web Development',
@@ -156,7 +154,6 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'FaHcjtLEfbXFTu0cGOo0h-XP8DvASdtFqo3EXieANak',
-    // yandex: 'haqiqiy-yandex-verification-kodingizni-qo‘ying', // faqat haqiqiy kod bilan oching
   },
   referrer: 'origin-when-cross-origin',
 }
@@ -179,11 +176,10 @@ const jsonLd = {
     image: `${siteUrl}/logo.png`,
     jobTitle: 'Web Developer / Fullstack Developer',
     description:
-      'React, Next.js va zamonaviy texnologiyalar asosida veb-saytlar va ilovalar yaratuvchi dasturchi. Toshkent, O‘zbekiston.',
+      "React, Next.js va zamonaviy texnologiyalar asosida veb-saytlar va ilovalar yaratuvchi dasturchi.",
     knowsAbout: [
       'React',
       'Next.js',
-      'TypeScript',
       'Frontend Development',
       'Fullstack Development',
       'Tailwind CSS',
@@ -207,11 +203,7 @@ const jsonLd = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }) {
   return (
     <html
       lang="uz"
@@ -220,13 +212,17 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd),
+          }}
         />
       </head>
+
       <body className="min-h-full flex flex-col items-center justify-center bg-black">
         <Toaster position="top-center" />
         <ContourBackground />
         <Navbar />
+
         <main className="min-h-full flex flex-col lg:mt-[120px] mt-[120px] w-full max-w-[1300px]">
           {children}
         </main>
