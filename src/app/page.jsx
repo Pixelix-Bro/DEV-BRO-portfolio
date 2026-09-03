@@ -33,7 +33,7 @@ function page() {
               Hi I'm <span className="text-gray-400 font-bold">Dadaxanov Ubaydulloh</span>
             </p>
             <p className="title hidden sm:inline font-sans text-white lg:text-[20px] md:text-[24px] text-[20px]">
-              {`I am a Full-Stack Developer specializing in JavaScript. My
+              {`I am a Frontend Developer specializing in JavaScript. My
 favorite technologies to work with are Next.js and Vue.js. I enjoy
 building modern, responsive, and high-performance web applications
 with clean, maintainable code and a great user experience.`}

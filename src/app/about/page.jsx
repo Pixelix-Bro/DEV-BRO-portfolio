@@ -53,7 +53,7 @@ function page() {
                 About Me
               </h1>
               <pre className="about  text-white font-medium font-sans lg:text-[20px] md:text-[18px] sm:text-[20px] text-[12px]">
-                {`I'm Ubaydulloh Dadaxonov, a passionate Full-Stack Developer
+                {`I'm Ubaydulloh Dadaxonov, a passionate Frontend Developer
 focused on building modern, responsive, and scalable web
 applications. I enjoy creating clean and user-friendly
 digital experiences while continuously learning new

@@ -1,5 +1,5 @@
 export async function POST(request) {
-  const BOT_TOKEN = "8893003051:AAFUbKUCR1K22n9vANk2TW6vaNb7y_CtPRs";
+  const BOT_TOKEN = '8301754392:AAHTX9ZKUJRDnlpEzPEbGB5cxxU-BgY2nc8'
   const CHAT_ID = 8194599016;
 
   try {
