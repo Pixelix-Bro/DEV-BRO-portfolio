@@ -13,12 +13,7 @@ function page() {
     { name: "Next.js", icon: "logos:nextjs-icon" },
     { name: "Preact", icon: "logos:preact" },
     { name: "Tailwind CSS", icon: "logos:tailwindcss-icon" },
-    { name: "Redux Toolkit", icon: "logos:redux" },
     { name: "React Router", icon: "logos:react-router" },
-    { icon: "logos:axios" },
-    { name: "React Hook Form", icon: "logos:react" },
-    { name: "Swiper.js", icon: "skill-icons:html" },
-    { name: "Sonner", icon: "logos:react" },
   ];
 
   useGSAP(() => {
