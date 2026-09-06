@@ -10,6 +10,7 @@ import Bars from './Bars'
 function Navbar() {
   const [active, setActive] = useState('home')
   const pathname = usePathname()
+  
 
   useEffect(() => {
     if (pathname === '/') {
