@@ -43,14 +43,15 @@ with clean, maintainable code and a great user experience.`}
           <div className="flex gap-[20px] title">
             <Link
               href={'/about'}
-              className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 pl-[40px] pr-[40px] flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
+              className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-green-500 hover:text-green-500 group transition duration-200 pl-[40px] pr-[40px] flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
-              <Info /> About
+              <Info className="transform transition-transform duration-500 group-hover:rotate-[360deg]" />{' '}
+              About
             </Link>
             <a
               href="/rezume/Rezume_My.pdf"
               download
-              className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200  pl-[40px] pr-[40px]  flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
+              className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-green-500 hover:text-green-500 transition duration-200  pl-[40px] pr-[40px]  flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
               <Download />
               CV Download

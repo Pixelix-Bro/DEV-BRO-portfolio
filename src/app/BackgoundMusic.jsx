@@ -31,9 +31,7 @@ export default function BackgroundMusic() {
       try {
         await audio.play()
         window.removeEventListener('pointerdown', handleFirstInteraction)
-      } catch {
-        // Browser autoplayni blokladi.
-      }
+      } catch {}
     }
 
     handleFirstInteraction()
@@ -79,11 +77,23 @@ export default function BackgroundMusic() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2">
-      <button type="button" onClick={toggleMute} aria-label={isMuted ? 'Ovozni yoqish' : 'Ovozni o‘chirish'} title={isMuted ? 'Unmute' : 'Mute'} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-white backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/10 active:scale-95">
+      <button
+        type="button"
+        onClick={toggleMute}
+        aria-label={isMuted ? 'Ovozni yoqish' : 'Ovozni o‘chirish'}
+        title={isMuted ? 'Unmute' : 'Mute'}
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-white backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/10 active:scale-95"
+      >
         {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
       </button>
 
-      <button type="button" onClick={toggleMusic} aria-label={isPlaying ? 'Musiqani to‘xtatish' : 'Musiqani yoqish'} title={isPlaying ? 'Pause music' : 'Play music'} className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/10 text-white shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 active:scale-95">
+      <button
+        type="button"
+        onClick={toggleMusic}
+        aria-label={isPlaying ? 'Musiqani to‘xtatish' : 'Musiqani yoqish'}
+        title={isPlaying ? 'Pause music' : 'Play music'}
+        className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/10 text-white shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 active:scale-95"
+      >
         {isPlaying && <span className="absolute inset-0 animate-pulse rounded-full bg-white/5" />}
 
         <span className="relative z-10">
