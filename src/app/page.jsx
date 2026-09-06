@@ -30,7 +30,7 @@ function page() {
       <div className="anima lg:flex-row flex flex-col-reverse w-full h-full items-center justify-center ">
         <div className="flex flex-col lg:items-start items-center lg:gap-[40px] gap-[20px]">
           <div className=" flex flex-col lg:items-start items-center w-[70%]">
-            <p className=" title text-white lg:text-[60px] md:text-[50px] text-[20px] font-medium lg:text-start text-center">
+            <p className=" title text-white lg:text-[60px] md:text-[50px] text-[20px] font-bold lg:text-start text-center">
               Hi I'm <span className="text-green-500 font-bold">Dadaxanov Ubaydulloh</span>
             </p>
             <p className="title hidden sm:inline font-sans text-white lg:text-[20px] md:text-[24px] text-[20px]">

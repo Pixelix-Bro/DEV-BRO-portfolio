@@ -5,6 +5,7 @@ import './globals.css'
 
 import Background from '@/app/backgraund'
 import Navbar from './Navbar/Navbar'
+import BackgroundMusic from '@/app/BackgoundMusic';
 
 const siteUrl = 'https://pixelix.uz'
 const authorName = 'Ubaydulloh Dadaxanov'
@@ -275,6 +276,9 @@ const jsonLd = {
   },
 }
 
+
+
+
 export default function RootLayout({ children }) {
   return (
     <html lang="uz" className="h-full antialiased">
@@ -288,6 +292,7 @@ export default function RootLayout({ children }) {
       </head>
 
       <body className="min-h-full flex flex-col items-center justify-center bg-black">
+        <BackgroundMusic />
         <Background />
 
         <Toaster position="top-center" />

@@ -12,13 +12,14 @@ function page() {
   })
 
   useGSAP(() => {
-    gsap.from('.animat', {
-      opacity: 0,
-      scale: 1.3,
-      scaleX: -1,
-      duration: 0.5,
-      delay:0.3
-    })
+gsap.from('.animat', {
+  opacity: 0,
+  scale: 1.3,
+  stagger: 0.2,
+  duration: 0.8,
+  ease: 'power3.out',
+  delay:0.5
+})
 
     gsap.from('.left', {
       opacity: 0,
@@ -127,7 +128,7 @@ function page() {
             <textarea
               value={send}
               cols="30"
-              rows="10"    
+              rows="10"
               className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] focus:border-white hover:border-green-500 outline-none transition-all duration-200 grow text-[16px]"
               placeholder="Enter Your Message"
               onChange={(e) => setSend(e.target.value)}
