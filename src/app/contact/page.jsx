@@ -112,14 +112,14 @@ function page() {
               <input
                 type="text"
                 value={name}
-                className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-white/50 transition-all duration-200 grow text-[16px]"
+                className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] focus:border-white outline-none hover:border-green-500 transition-all duration-200 grow text-[16px]"
                 placeholder="Enter Your Name"
                 onChange={(e) => setName(e.target.value)}
               />
               <input
                 type="email"
                 value={email}
-                className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-white/50 transition-all duration-200 grow text-[16px]"
+                className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] focus:border-white outline-none hover:border-green-500 transition-all duration-200 grow text-[16px]"
                 placeholder="Enter Your Email"
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -127,15 +127,15 @@ function page() {
             <textarea
               value={send}
               cols="30"
-              rows="10"
-              className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-white/50 transition-all duration-200 grow text-[16px]"
+              rows="10"    
+              className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] focus:border-white hover:border-green-500 outline-none transition-all duration-200 grow text-[16px]"
               placeholder="Enter Your Message"
               onChange={(e) => setSend(e.target.value)}
             ></textarea>
             <button
               type="submit"
               disabled={loading}
-              className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-white/50 transition-all duration-200 grow text-[16px]"
+              className="text-2xl backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-green-500 outline-none transition-all duration-200 grow text-[16px]"
             >
               Send Message
             </button>

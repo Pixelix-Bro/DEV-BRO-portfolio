@@ -31,7 +31,7 @@ function page() {
         <div className="flex flex-col lg:items-start items-center lg:gap-[40px] gap-[20px]">
           <div className=" flex flex-col lg:items-start items-center w-[70%]">
             <p className=" title text-white lg:text-[60px] md:text-[50px] text-[20px] font-medium lg:text-start text-center">
-              Hi I'm <span className="text-gray-400 font-bold">Dadaxanov Ubaydulloh</span>
+              Hi I'm <span className="text-green-500 font-bold">Dadaxanov Ubaydulloh</span>
             </p>
             <p className="title hidden sm:inline font-sans text-white lg:text-[20px] md:text-[24px] text-[20px]">
               {`I am a Frontend Developer specializing in JavaScript. My

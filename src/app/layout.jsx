@@ -220,9 +220,11 @@ export default function RootLayout({ children }) {
           muted
           loop
           playsInline
-          className="fixed inset-0 w-full h-full object-cover -z-10"
+          preload="auto"
+          poster="/loading.webp"
+          className="fixed inset-0 h-full w-full object-cover -z-10"
         >
-          <source src="/video/back.mp4" type="video/mp4" />
+          <source src="/video/back.webm" type="video/webm" />
         </video>
         <Toaster position="top-center" />
         <Navbar />
