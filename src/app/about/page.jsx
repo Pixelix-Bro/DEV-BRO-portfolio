@@ -1,12 +1,11 @@
 'use client'
-import { useGSAP } from '@gsap/react'
-import { Icon } from '@iconify/react'
-import gsap from 'gsap'
-import { useEffect } from 'react'
+import { useGSAP } from '@gsap/react';
+import { Icon } from '@iconify/react';
+import gsap from 'gsap';
+import { useEffect } from 'react';
 
 function page() {
   const frontendSkills = [
-<<<<<<< HEAD
     { name: "HTML5", icon: "vscode-icons:file-type-html" },
     { name: "CSS3", icon: "vscode-icons:file-type-css" },
     { name: "JavaScript (ES6+)", icon: "logos:javascript" },
@@ -15,23 +14,8 @@ function page() {
     { name: "Preact", icon: "logos:preact" },
     { name: "Tailwind CSS", icon: "logos:tailwindcss-icon" },
     { name: "React Router", icon: "logos:react-router" },
-  ];
-=======
-    { name: 'HTML5', icon: 'vscode-icons:file-type-html' },
-    { name: 'CSS3', icon: 'vscode-icons:file-type-css' },
-    { name: 'JavaScript (ES6+)', icon: 'logos:javascript' },
-    { name: 'React.js', icon: 'logos:react' },
-    { name: 'Next.js', icon: 'logos:nextjs-icon' },
-    { name: 'Preact', icon: 'logos:preact' },
-    { name: 'Tailwind CSS', icon: 'logos:tailwindcss-icon' },
-    { name: 'Redux Toolkit', icon: 'logos:redux' },
-    { name: 'React Router', icon: 'logos:react-router' },
-    { icon: 'logos:axios' },
-    { name: 'React Hook Form', icon: 'logos:react' },
-    { name: 'Swiper.js', icon: 'skill-icons:html' },
-    { name: 'Sonner', icon: 'logos:react' },
   ]
->>>>>>> 6a72cf4 (update)
+
 
   useGSAP(() => {
     gsap.from('.skile', {
