@@ -1,10 +1,9 @@
-"use client";
-import { Icon } from "@iconify/react";
-import { useEffect } from "react";
+'use client'
+import { useEffect } from 'react'
 function page() {
   useEffect(() => {
-    document.title = "Pixelix-Bro | Projects";
-  });
+    document.title = 'Pixelix | Projects'
+  })
 
   return (
     <>
@@ -58,7 +57,7 @@ function page() {
         })} */}
       </div>
     </>
-  );
+  )
 }
 
-export default page;
+export default page

@@ -1,28 +1,29 @@
-"use client";
+'use client'
 
-import { useGSAP } from "@gsap/react";
-import { Icon } from "@iconify/react";
-import gsap from "gsap";
-import { Code2, Info } from "lucide-react";
-import Link from "next/link";
-import { useEffect } from "react";
+import { useGSAP } from '@gsap/react'
+import { Icon } from '@iconify/react'
+import gsap from 'gsap'
+import { Download, Info } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect } from 'react'
 function page() {
   useEffect(() => {
-    document.title = "Pixelix-Bro | Home";
-  }, []);
+    document.title = 'Pixelix-Bro | Home'
+  }, [])
 
   useGSAP(() => {
-    gsap.from(".title", {
+    gsap.from('.title', {
       x: -100,
       opacity: 0,
       stagger: 0.1,
-    });
-    gsap.from(".ong", {
+      delay: 0.5,
+    })
+    gsap.from('.ong', {
       x: 100,
       opacity: 0,
       stagger: 0.1,
-    });
-  }, []);
+    })
+  }, [])
 
   return (
     <>
@@ -46,12 +47,14 @@ with clean, maintainable code and a great user experience.`}
             >
               <Info /> About
             </Link>
-            <Link
-              href={'/projects'}
+            <a
+              href="/rezume/Rezume_My.pdf"
+              download
               className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200  pl-[40px] pr-[40px]  flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
-              <Code2 /> Projects
-            </Link>
+              <Download />
+              CV Download
+            </a>
           </div>
         </div>
         <div className="flex flex-col items-center gap-[20px]">
@@ -101,4 +104,4 @@ with clean, maintainable code and a great user experience.`}
   )
 }
 
-export default page;
+export default page

@@ -1,83 +1,89 @@
-"use client";
+'use client'
 
-import { useGSAP } from "@gsap/react";
-import { Icon } from "@iconify/react";
-import gsap from "gsap";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useGSAP } from '@gsap/react'
+import { Icon } from '@iconify/react'
+import gsap from 'gsap'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 function page() {
   useEffect(() => {
-    document.title = "PIxelix-Bro | Contact";
-  });
+    document.title = 'PIxelix | Contact'
+  })
 
   useGSAP(() => {
-    gsap.from(".animat", {
-      x: 100,
+    gsap.from('.animat', {
       opacity: 0,
-    });
-    gsap.from(".left", {
-      x: -100,
+      scale: 1.3,
+      scaleX: -1,
+      duration: 0.5,
+      delay:0.3
+    })
+
+    gsap.from('.left', {
       opacity: 0,
-    });
-  });
+      scale: 1.3,
+      scaleX: -1,
+      duration: 0.3,
+    })
+  })
 
   const message = [
     {
       id: 1,
-      tel: "+998906931808",
-      caption: "Contact via phone",
-      icon: "material-symbols:call-sharp",
+      tel: '+998906931808',
+      caption: 'Contact via phone',
+      icon: 'material-symbols:call-sharp',
     },
     {
       id: 2,
-      tel: "lazizbekxoljigitov@gmail.com",
-      caption: "Contact via message",
-      icon: "logos:google-gmail",
+      tel: 'lazizbekxoljigitov@gmail.com',
+      caption: 'Contact via message',
+      icon: 'logos:google-gmail',
     },
     {
       id: 3,
-      tel: "@DEV_BR0",
-      caption: "Contact via Telegram",
-      icon: "logos:telegram",
+      tel: '@DEV_BR0',
+      caption: 'Contact via Telegram',
+      icon: 'logos:telegram',
     },
-  ];
+  ]
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [send, setSend] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [send, setSend] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function sendMessage(e) {
-    e.preventDefault();
+    e.preventDefault()
 
     try {
-      setLoading(true);
+      setLoading(true)
 
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, send }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (data.success) {
-        toast.success("Habar Yuborldi");
-        setName("");
-        setEmail("");
-        setSend("");
+        toast.success('Habar Yuborldi')
+        setName('')
+        setEmail('')
+        setSend('')
       } else {
-        toast.error("message error");
+        toast.error('message error')
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong. Please try again.");
+      console.error(error)
+      toast.error('Something went wrong. Please try again.')
     } finally {
-      setLoading(false);
-      setName("");
-      setEmail("");
-      setSend("");
+      setLoading(false)
+      setName('')
+      setEmail('')
+      setSend('')
     }
   }
 
@@ -89,7 +95,7 @@ function page() {
             return (
               <div
                 key={item.id}
-                className="backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-white/50 transition-all duration-200 grow w-full"
+                className=" backdrop-blur-[9px] gap-[20px] border border-white/20 rounded-2xl shadow-xl text-white flex flex-col  p-[10px] hover:border-white/50 transition-all duration-200 grow w-full"
               >
                 <div className="flex text-white items-center gap-[10px]">
                   <Icon icon={item.icon} fontSize={20} color="green" />
@@ -97,14 +103,11 @@ function page() {
                 </div>
                 <p className="text-white">{item.caption}</p>
               </div>
-            );
+            )
           })}
         </div>
         <div className="flex flex-col lg:w-[50%] w-full gap-[20px] animat">
-          <form
-            onSubmit={sendMessage}
-            className="w-full flex flex-col gap-[20px]"
-          >
+          <form onSubmit={sendMessage} className="w-full flex flex-col gap-[20px]">
             <div className="flex lg:flex-row flex-col w-full gap-[10px]">
               <input
                 type="text"
@@ -140,7 +143,7 @@ function page() {
         </div>
       </div>
     </>
-  );
+  )
 }
 
-export default page;
+export default page

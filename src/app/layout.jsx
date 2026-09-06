@@ -1,10 +1,9 @@
 import 'aos/dist/aos.css'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
-import ContourBackground from './backgraund'
+import 'velore/velore.css'
 import './globals.css'
 import Navbar from './Navbar/Navbar'
-import 'velore/velore.css'
 
 const siteUrl = 'https://pixelix.uz'
 const authorName = 'Ubaydulloh Dadaxanov'
@@ -165,7 +164,7 @@ const jsonLd = {
   url: siteUrl,
   name: `${authorName} — Pixelix`,
   description:
-    "Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.",
+    'Pixelix — Ubaydulloh Dadaxanov tomonidan yaratilgan zamonaviy veb-saytlar va ilovalar portfolio sahifasi.',
   inLanguage: 'uz-UZ',
   mainEntity: {
     '@type': 'Person',
@@ -176,7 +175,7 @@ const jsonLd = {
     image: `${siteUrl}/logo.png`,
     jobTitle: 'Web Developer / Fullstack Developer',
     description:
-      "React, Next.js va zamonaviy texnologiyalar asosida veb-saytlar va ilovalar yaratuvchi dasturchi.",
+      'React, Next.js va zamonaviy texnologiyalar asosida veb-saytlar va ilovalar yaratuvchi dasturchi.',
     knowsAbout: [
       'React',
       'Next.js',
@@ -205,10 +204,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="uz"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="uz" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
         <script
           type="application/ld+json"
@@ -219,8 +215,16 @@ export default function RootLayout({ children }) {
       </head>
 
       <body className="min-h-full flex flex-col items-center justify-center bg-black">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="fixed inset-0 w-full h-full object-cover -z-10"
+        >
+          <source src="/video/back.mp4" type="video/mp4" />
+        </video>
         <Toaster position="top-center" />
-        <ContourBackground />
         <Navbar />
 
         <main className="min-h-full flex flex-col lg:mt-[120px] mt-[120px] w-full max-w-[1300px]">
