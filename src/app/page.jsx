@@ -45,7 +45,7 @@ with clean, maintainable code and a great user experience.`}
               href={'/about'}
               className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-green-500 hover:text-green-500 group transition duration-200 pl-[40px] pr-[40px] flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
-              <Info className="transform transition-transform duration-500 group-hover:rotate-[360deg]" />{' '}
+              <Info className="transform transition-transform duration-900 group-hover:rotate-[360deg]" />{' '}
               About
             </Link>
             <a
