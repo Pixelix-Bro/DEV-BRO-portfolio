@@ -23,11 +23,10 @@ function page() {
       title: 'Book-Flow',
       caption:
         'Book WebFlow — kitoblarni onlayn ko‘rish va xarid qilish uchun yaratilgan zamonaviy va responsive web platforma. Loyihada foydalanuvchilar kitoblar bilan tanishishi, ularning ma’lumotlarini ko‘rishi va qulay interfeys orqali kerakli kitoblarni topishi mumkin. Dizayn minimalistik, zamonaviy va foydalanishga qulay qilib ishlab chiqilgan.',
-      texnologiya: ['Vue.js', 'Tailwindcss', 'AOS'],
+      texnologiya: ['Vue 3', 'Vite', 'vue-router', 'Tailwind CSS', 'AOS'],
       demo: 'https://book-webflow-cfp6.vercel.app/',
       github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
     },
-
   ]
 
   return (
@@ -47,7 +46,7 @@ function page() {
               <div className="flex flex-col p-[10px] gap-[10px]">
                 <p className="text-[20px] text-white font-bold truncate">{i.title}</p>
                 <p className="text-sm text-gray-400 leading-7 line-clamp-3  ">{i.caption}</p>
-                <div className="flex gap-[10px]">
+                <div className="flex gap-[10px] flex-wrap">
                   {i.texnologiya.map((tex) => {
                     return (
                       <p
