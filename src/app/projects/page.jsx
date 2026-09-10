@@ -16,23 +16,11 @@ function page() {
     })
   })
 
-  const projects = [
-    {
-      id: 1,
-      photo: '/projects/pro1.png',
-      title: 'Book-Flow',
-      caption:
-        'Book WebFlow — kitoblarni onlayn ko‘rish va xarid qilish uchun yaratilgan zamonaviy va responsive web platforma. Loyihada foydalanuvchilar kitoblar bilan tanishishi, ularning ma’lumotlarini ko‘rishi va qulay interfeys orqali kerakli kitoblarni topishi mumkin. Dizayn minimalistik, zamonaviy va foydalanishga qulay qilib ishlab chiqilgan.',
-      texnologiya: ['Vue 3', 'Vite', 'vue-router', 'Tailwind CSS', 'AOS'],
-      demo: 'https://book-webflow-cfp6.vercel.app/',
-      github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
-    },
-  ]
 
   return (
     <>
       <div className="flex flex-wrap md:justify-start md:items-start h-full text-center flex-row rounded-xl gap-[20px] animat mt-[-100px]">
-        {projects.map((i) => {
+        {/* {projects.map((i) => {
           return (
             <div
               key={i.id}
@@ -78,7 +66,7 @@ function page() {
               </div>
             </div>
           )
-        })}
+        })} */}
       </div>
     </>
   )
