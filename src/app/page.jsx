@@ -6,7 +6,7 @@ import gsap from 'gsap';
 import { Download, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { VeloreGlass } from 'velore';
+import { VeloreButton } from 'velore';
 function page() {
   useEffect(() => {
     document.title = 'Pixelix-Bro | Home'
@@ -58,7 +58,7 @@ with clean, maintainable code and a great user experience.`}
             >
               <Download />
               CV Download
-            </VeloreGlass>
+            </VeloreButton>
           </div>
         </div>
         <div className="flex flex-col items-center gap-[20px]">
