@@ -1,12 +1,11 @@
 'use client'
 
-import { useGSAP } from '@gsap/react';
-import { Icon } from '@iconify/react';
-import gsap from 'gsap';
-import { Download, Info } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect } from 'react';
-import { VeloreButton } from 'velore';
+import { useGSAP } from '@gsap/react'
+import { Icon } from '@iconify/react'
+import gsap from 'gsap'
+import { Download, Info } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect } from 'react'
 function page() {
   useEffect(() => {
     document.title = 'Pixelix-Bro | Home'
@@ -42,23 +41,21 @@ with clean, maintainable code and a great user experience.`}
             </p>
           </div>
           <div className="flex gap-[20px] title">
-          <VeloreButton>
             <Link
               href={'/about'}
-
+              className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-green-500 hover:text-green-500 group transition duration-200 pl-[40px] pr-[40px] flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
               <Info className="transform transition-transform duration-900 group-hover:rotate-[360deg]" />{' '}
               About
             </Link>
-          </VeloreButton>
-            <VeloreButton
+            <a
               href="/rezume/Rezume_My.pdf"
               download
               className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-green-500 hover:text-green-500 transition duration-200  pl-[40px] pr-[40px]  flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] "
             >
               <Download />
               CV Download
-            </VeloreButton>
+            </a>
           </div>
         </div>
         <div className="flex flex-col items-center gap-[20px]">
