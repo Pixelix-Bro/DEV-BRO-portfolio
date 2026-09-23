@@ -27,16 +27,16 @@ function Bars({ modal, setModal }) {
         variant="liquid"
         dark
         onClick={(e) => e.stopPropagation()}
-        // className="
-        //   relative z-10
-        //   !flex h-full w-[75%] max-w-sm !flex-col
-        //   !rounded-none
-        //   border-l border-white/25
-        //   !p-6 text-white
-        //   !bg-white/10
-        //   !backdrop-blur-2xl
-        //   !shadow-[0_0_40px_rgba(0,0,0,0.4)]
-        // "
+        className="
+          relative z-10
+          !flex h-full w-[75%] max-w-sm !flex-col
+          !rounded-none
+          border-l border-white/25
+          !p-6 text-white
+          !bg-white/10
+          !backdrop-blur-2xl
+          !shadow-[0_0_40px_rgba(0,0,0,0.4)]
+        "
         style={{
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           backdropFilter: 'blur(40px) saturate(180%)',
