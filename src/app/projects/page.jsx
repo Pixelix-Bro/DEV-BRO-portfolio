@@ -1,11 +1,12 @@
 'use client'
-import { useGSAP } from '@gsap/react';
-import { gsap } from 'gsap';
-import { useEffect } from 'react';
+import { useGSAP } from '@gsap/react'
+import { Icon } from '@iconify/react'
+import { gsap } from 'gsap'
+import { useEffect } from 'react'
 function page() {
   useEffect(() => {
     document.title = 'Pixelix | Projects'
-  })
+  }, [])
 
   useGSAP(() => {
     gsap.from('.animat', {
@@ -13,7 +14,7 @@ function page() {
       opacity: 0,
       stagger: 1,
     })
-  })
+  }, [])
 
   const projects = [
     {
@@ -33,8 +34,8 @@ function page() {
       caption:
         "Ushbu Project kitob dokonlarga kop holatlarda kitob dokonlarda Savdo sayti unchalik ham yaxsh bolmaganligi va samarali bolo'lmaganligi sabab men buni qo'lmdan kelguncha samarali qldm lekn ishga tushun real project emas",
       texnologiya: ['Vue.js', 'Vite', 'Tailwindcss'],
-      demo: 'https://book-webflow-cfp6.vercel.app/',
-      github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
+      demo: 'https://react-project-puce-eta.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/react-project.git',
     },
   ]
 
@@ -70,6 +71,7 @@ function page() {
                 <div className="flex gap-[20px]">
                   <a
                     target="_blank"
+                    rel="noopener noreferrer"
                     href={`${i.demo}`}
                     className="p-[10px] backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 md:text-[17px] text-[12px] flex gap-[10px] items-center"
                   >
@@ -77,6 +79,7 @@ function page() {
                   </a>
                   <a
                     target="_blank"
+                    rel="noopener noreferrer"
                     href={`${i.github}`}
                     className="p-[10px] backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 md:text-[17px] text-[12px] flex gap-[10px] items-center"
                   >
