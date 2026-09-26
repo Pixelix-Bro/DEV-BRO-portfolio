@@ -1,52 +1,60 @@
-'use client'
-import { useGSAP } from '@gsap/react'
-import { Icon } from '@iconify/react'
-import { gsap } from 'gsap'
-import { useEffect } from 'react'
+"use client";
+import { useGSAP } from "@gsap/react";
+import { Icon } from "@iconify/react";
+import { gsap } from "gsap";
+import { useEffect } from "react";
 function page() {
   useEffect(() => {
-    document.title = 'Pixelix | Projects'
-  }, [])
+    document.title = "Pixelix | Projects";
+  }, []);
 
   useGSAP(() => {
-    gsap.from('.animat', {
+    gsap.from(".animat", {
       y: 100,
       opacity: 0,
       stagger: 1,
-    })
-  }, [])
+    });
+  }, []);
 
   const projects = [
     {
       id: 1,
-      title: 'EXPET',
-      photo: '/projects/pro2.png',
+      title: "EXPET",
+      photo: "/projects/pro2.png",
       caption:
-        'Ushbu Project odamlarni Kunlik Harajatni Hisoblayd va qolgan barcha ortiq harajatlarni Hisoblayd va bracha userlarga oylik daromatidan kelib chqan qolatda qolgan pullni qayerga ishlatshni taklif berad',
-      texnologiya: ['React.js', 'React-Router', 'Tailwindcss'],
-      demo: 'https://react-project-puce-eta.vercel.app/',
-      github: 'https://github.com/Pixelix-Bro/react-project.git',
+        "Ushbu Project odamlarni Kunlik Harajatni Hisoblayd va qolgan barcha ortiq harajatlarni Hisoblayd va bracha userlarga oylik daromatidan kelib chqan qolatda qolgan pullni qayerga ishlatshni taklif berad",
+      texnologiya: ["React.js", "Vite", "Tailwindcss"],
+      demo: "https://react-project-puce-eta.vercel.app/",
+      github: "https://github.com/Pixelix-Bro/react-project.git",
+      color: "#61DBFB",
+      textColor: "#51c4e0c9",
     },
     {
       id: 2,
-      title: 'Book-Flow',
-      photo: '/projects/pro1.png',
+      title: "Book-Flow",
+      photo: "/projects/pro1.png",
       caption:
         "Ushbu Project kitob dokonlarga kop holatlarda kitob dokonlarda Savdo sayti unchalik ham yaxsh bolmaganligi va samarali bolo'lmaganligi sabab men buni qo'lmdan kelguncha samarali qldm lekn ishga tushun real project emas",
-      texnologiya: ['Vue.js', 'Vite', 'Tailwindcss'],
-      demo: 'https://react-project-puce-eta.vercel.app/',
-      github: 'https://github.com/Pixelix-Bro/react-project.git',
+      texnologiya: ["Vue.js", "Vite", "Tailwindcss"],
+      demo: "https://book-webflow-cfp6.vercel.app/",
+      github: "https://github.com/Pixelix-Bro/Book-Webflow.git",
+      color: "#42B883",
+      textColor: "#3c8d6ac4",
     },
-  ]
+  ];
 
   return (
     <>
-      <div className="flex flex-wrap md:justify-start md:items-start h-full text-center flex-row rounded-xl gap-[20px] animat mt-[-100px]">
+      <div className="flex  flex-wrap md:justify-start md:items-start h-full text-center flex-row rounded-xl gap-[20px] animat mt-[-100px]">
         {projects.map((i) => {
           return (
             <div
               key={i.id}
-              className="backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px]  flex-col md:w-[300px] w-[200px] group"
+              style={{
+                "--project-color": i.color,
+                "--project-Text": i.textColor,
+              }}
+              className="backdrop-blur-[9px] border border-white/60 rounded-2xl shadow-xl text-white hover:text-white/60 transition duration-200 flex gap-[8px] items-center p-[10px] lg:text-[20px] md:text-[18px] sm:text-[16px] text-[14px] flex-col md:w-[300px] w-[200px] group hover:border-[var(--project-color)]"
             >
               <img
                 src={i.photo}
@@ -54,18 +62,22 @@ function page() {
                 className="rounded-xl opacity-0 scale-90 max-h-0 group-hover:max-h-[500px] group-hover:scale-100 group-hover:opacity-100 transition-all duration-400 absolute md:top-[-180px] top-[-100px] flex"
               />
               <div className="flex flex-col p-[10px] gap-[10px]">
-                <p className="text-[20px] text-white font-bold truncate">{i.title}</p>
-                <p className="text-sm text-gray-400 leading-7 line-clamp-3  ">{i.caption}</p>
+                <p className="text-[20px] text-white font-bold truncate">
+                  {i.title}
+                </p>
+                <p className="text-sm text-gray-400 leading-7 line-clamp-3 group-hover:text-[var(--project-Text)] ">
+                  {i.caption}
+                </p>
                 <div className="flex gap-[10px] flex-wrap">
                   {i.texnologiya.map((tex) => {
                     return (
                       <p
                         key={tex}
-                        className=" backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 flex gap-[8px]  p-[6px] cursor-pointer text-[13px]"
+                        className=" backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 flex gap-[8px]  p-[6px] cursor-pointer text-[13px] group-hover:border-[var(--project-color)]"
                       >
                         {tex}
                       </p>
-                    )
+                    );
                   })}
                 </div>
                 <div className="flex gap-[20px]">
@@ -73,7 +85,7 @@ function page() {
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`${i.demo}`}
-                    className="p-[10px] backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 md:text-[17px] text-[12px] flex gap-[10px] items-center"
+                    className="p-[10px] backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 md:text-[17px] text-[12px] flex gap-[10px] items-center group-hover:border-[var(--project-color)]"
                   >
                     Demo Site
                   </a>
@@ -81,19 +93,19 @@ function page() {
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`${i.github}`}
-                    className="p-[10px] backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 md:text-[17px] text-[12px] flex gap-[10px] items-center"
+                    className="p-[10px] backdrop-blur-[9px] border border-white/20 rounded-2xl shadow-xl text-white hover:border-white/60 hover:text-white/60 transition duration-200 md:text-[17px] text-[12px] flex gap-[10px] items-center group-hover:border-[var(--project-color)]"
                   >
-                    <Icon icon={'simple-icons:github'} />
+                    <Icon icon={"simple-icons:github"} />
                     GitHub
                   </a>
                 </div>
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </>
-  )
+  );
 }
 
-export default page
+export default page;
