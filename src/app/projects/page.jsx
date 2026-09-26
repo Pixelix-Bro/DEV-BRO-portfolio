@@ -1,8 +1,7 @@
 'use client'
-import { useGSAP } from '@gsap/react'
-import { Icon } from '@iconify/react'
-import { gsap } from 'gsap'
-import { useEffect } from 'react'
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
+import { useEffect } from 'react';
 function page() {
   useEffect(() => {
     document.title = 'Pixelix | Projects'
@@ -16,11 +15,33 @@ function page() {
     })
   })
 
+  const projects = [
+    {
+      id: 1,
+      title: 'EXPET',
+      photo: '/projects/pro2.png',
+      caption:
+        'Ushbu Project odamlarni Kunlik Harajatni Hisoblayd va qolgan barcha ortiq harajatlarni Hisoblayd va bracha userlarga oylik daromatidan kelib chqan qolatda qolgan pullni qayerga ishlatshni taklif berad',
+      texnologiya: ['React.js', 'React-Router', 'Tailwindcss'],
+      demo: 'https://react-project-puce-eta.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/react-project.git',
+    },
+    {
+      id: 2,
+      title: 'Book-Flow',
+      photo: '/projects/pro1.png',
+      caption:
+        "Ushbu Project kitob dokonlarga kop holatlarda kitob dokonlarda Savdo sayti unchalik ham yaxsh bolmaganligi va samarali bolo'lmaganligi sabab men buni qo'lmdan kelguncha samarali qldm lekn ishga tushun real project emas",
+      texnologiya: ['Vue.js', 'Vite', 'Tailwindcss'],
+      demo: 'https://book-webflow-cfp6.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
+    },
+  ]
 
   return (
     <>
       <div className="flex flex-wrap md:justify-start md:items-start h-full text-center flex-row rounded-xl gap-[20px] animat mt-[-100px]">
-        {/* {projects.map((i) => {
+        {projects.map((i) => {
           return (
             <div
               key={i.id}
@@ -66,7 +87,7 @@ function page() {
               </div>
             </div>
           )
-        })} */}
+        })}
       </div>
     </>
   )

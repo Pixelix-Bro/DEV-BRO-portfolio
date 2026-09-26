@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { VeloreGlass, VeloreModal } from 'velore'
 import 'velore/velore.css'
-
+  
 const links = [
   { title: 'Home', href: '/' },
   { title: 'About', href: '/about' },
