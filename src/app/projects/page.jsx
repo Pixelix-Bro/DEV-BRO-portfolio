@@ -19,29 +19,41 @@ function page() {
   const projects = [
     {
       id: 1,
-      title: "EXPET",
-      photo: "/projects/pro2.png",
+      title: 'EXPET',
+      photo: '/projects/pro2.png',
       caption:
-        "Ushbu Project odamlarni Kunlik Harajatni Hisoblayd va qolgan barcha ortiq harajatlarni Hisoblayd va bracha userlarga oylik daromatidan kelib chqan qolatda qolgan pullni qayerga ishlatshni taklif berad",
-      texnologiya: ["React.js", "Vite", "Tailwindcss"],
-      demo: "https://react-project-puce-eta.vercel.app/",
-      github: "https://github.com/Pixelix-Bro/react-project.git",
-      color: "#61DBFB",
-      textColor: "#51c4e0c9",
+        'Ushbu Project odamlarni Kunlik Harajatni Hisoblayd va qolgan barcha ortiq harajatlarni Hisoblayd va bracha userlarga oylik daromatidan kelib chqan qolatda qolgan pullni qayerga ishlatshni taklif berad',
+      texnologiya: ['React.js', 'Vite', 'Tailwindcss'],
+      demo: 'https://react-project-puce-eta.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/react-project.git',
+      color: '#61DBFB',
+      textColor: '#51c4e0c9',
     },
     {
       id: 2,
-      title: "Book-Flow",
-      photo: "/projects/pro1.png",
+      title: 'Book-Flow',
+      photo: '/projects/pro1.png',
       caption:
         "Ushbu Project kitob dokonlarga kop holatlarda kitob dokonlarda Savdo sayti unchalik ham yaxsh bolmaganligi va samarali bolo'lmaganligi sabab men buni qo'lmdan kelguncha samarali qldm lekn ishga tushun real project emas",
-      texnologiya: ["Vue.js", "Vite", "Tailwindcss"],
-      demo: "https://book-webflow-cfp6.vercel.app/",
-      github: "https://github.com/Pixelix-Bro/Book-Webflow.git",
-      color: "#42B883",
-      textColor: "#3c8d6ac4",
+      texnologiya: ['Vue.js', 'Vite', 'Tailwindcss'],
+      demo: 'https://book-webflow-cfp6.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
+      color: '#42B883',
+      textColor: '#3c8d6ac4',
     },
-  ];
+    {
+      id: 3,
+      title: 'Food-explor',
+      photo: '/projects/pro3.png',
+      caption:
+        "A modern food ordering website where users can easily browse meals, view details, add products to their cart, and place orders.",
+      texnologiya: ['React.js', 'Vite', 'Tailwindcss'],
+      demo: 'https://book-webflow-cfp6.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
+      color: '#61DBFB',
+      textColor: '#51c4e0c9',
+    },
+  ]
 
   return (
     <>
