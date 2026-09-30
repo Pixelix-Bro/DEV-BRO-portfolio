@@ -46,10 +46,10 @@ function page() {
       title: 'Food-explor',
       photo: '/projects/pro3.png',
       caption:
-        "A modern food ordering website where users can easily browse meals, view details, add products to their cart, and place orders.",
+        'A modern food ordering website where users can easily browse meals, view details, add products to their cart, and place orders.',
       texnologiya: ['React.js', 'Vite', 'Tailwindcss'],
-      demo: 'https://book-webflow-cfp6.vercel.app/',
-      github: 'https://github.com/Pixelix-Bro/Book-Webflow.git',
+      demo: 'https://food-explor.vercel.app/',
+      github: 'https://github.com/Pixelix-Bro/Food-explor',
       color: '#61DBFB',
       textColor: '#51c4e0c9',
     },
