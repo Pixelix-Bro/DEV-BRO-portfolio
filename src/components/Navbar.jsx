@@ -108,7 +108,7 @@ export default function Navbar() {
           {/* Right Action / Mobile Button */}
           <div className="flex items-center gap-3">
             <Link
-              href="/rezume/Rezume_My.pdf"
+              href="./rezume/Rezume_My.pdf"
               download
               className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-md text-xs font-mono tracking-widest text-white hover:bg-white hover:text-black hover:border-white transition-all duration-300"
               data-cursor="link"
