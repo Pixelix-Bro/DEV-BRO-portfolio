@@ -140,7 +140,7 @@ html.lenis, html.lenis body {
 
 /* Editorial typography clamps */
 .text-giant {
-  font-size: clamp(2.5rem, 9vw, 11rem);
+  font-size: clamp(2.5rem, 9vw, 8rem);
   line-height: 0.9;
   letter-spacing: -0.04em;
 }
