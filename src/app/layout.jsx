@@ -2,7 +2,6 @@ import { Toaster } from 'sonner'
 import './globals.css'
 
 import MonochromeCanvas from '@/components/MonochromeCanvas'
-import SoundToggle from '@/components/SoundToggle'
 import CustomCursor from '@/components/CustomCursor'
 import SmoothScroll from '@/components/SmoothScroll'
 import Navbar from '@/components/Navbar'
@@ -293,7 +292,6 @@ export default function RootLayout({ children }) {
         <div className="noise-overlay" aria-hidden="true" />
         <CustomCursor />
         <MonochromeCanvas />
-        <SoundToggle />
         <Toaster position="top-center" theme="dark" richColors />
 
         <SmoothScroll>
