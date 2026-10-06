@@ -291,13 +291,13 @@ export default function HomePage() {
             </div>
 
             <div className="overflow-hidden">
-              <h1 className="hero-line text-giant font-extrabold uppercase tracking-tighter text-white leading-[0.88]">
+              <h1 className="hero-line text-huge font-extrabold uppercase tracking-tighter text-white leading-[0.88]">
                 UBAYDULLOH
               </h1>
             </div>
 
             <div className="overflow-hidden">
-              <h1 className="hero-line text-giant font-extrabold uppercase tracking-tighter text-white/90 leading-[0.88]">
+              <h1 className="hero-line text-huge font-extrabold uppercase tracking-tighter text-white/90 leading-[0.88]">
                 DADAXANOV
               </h1>
             </div>
