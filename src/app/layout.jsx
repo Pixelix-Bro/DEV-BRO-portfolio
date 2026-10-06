@@ -1,11 +1,12 @@
-import 'aos/dist/aos.css'
 import { Toaster } from 'sonner'
-import 'velore/velore.css'
 import './globals.css'
 
-import Background from '@/app/backgraund'
-import Navbar from './Navbar/Navbar'
-import BackgroundMusic from '@/app/BackgoundMusic';
+import MonochromeCanvas from '@/components/MonochromeCanvas'
+import SoundToggle from '@/components/SoundToggle'
+import CustomCursor from '@/components/CustomCursor'
+import SmoothScroll from '@/components/SmoothScroll'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 const siteUrl = 'https://pixelix.uz'
 const authorName = 'Ubaydulloh Dadaxanov'
@@ -16,17 +17,17 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#7C3AED' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f0c29' },
+    { media: '(prefers-color-scheme: light)', color: '#000000' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
   ],
-  colorScheme: 'dark light',
+  colorScheme: 'dark',
 }
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
 
   title: {
-    default: 'Pixelix — Portfolio & Web Development',
+    default: 'Pixelix — Portfolio & Web Development | Ubaydulloh Dadaxanov',
     template: '%s | Pixelix',
   },
 
@@ -44,7 +45,7 @@ export const metadata = {
     'veb dasturlash',
     'veb sayt yaratish',
     'Uzbekistan developer',
-    'Tashkent developer',
+    'Namangan developer',
     'React developer',
     'Next.js developer',
     'Tailwind CSS',
@@ -130,7 +131,7 @@ export const metadata = {
       {
         rel: 'mask-icon',
         url: '/logo.png',
-        color: '#7C3AED',
+        color: '#FFFFFF',
       },
     ],
   },
@@ -270,18 +271,15 @@ const jsonLd = {
 
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Tashkent',
+      addressLocality: 'Namangan',
       addressCountry: 'UZ',
     },
   },
 }
 
-
-
-
 export default function RootLayout({ children }) {
   return (
-    <html lang="uz" className="h-full antialiased">
+    <html lang="uz" className="h-full bg-black text-white antialiased">
       <head>
         <script
           type="application/ld+json"
@@ -291,17 +289,20 @@ export default function RootLayout({ children }) {
         />
       </head>
 
-      <body className="min-h-full flex flex-col items-center justify-center bg-black">
-        <BackgroundMusic />
-        <Background />
+      <body className="min-h-screen bg-black text-white flex flex-col relative selection:bg-white selection:text-black">
+        <div className="noise-overlay" aria-hidden="true" />
+        <CustomCursor />
+        <MonochromeCanvas />
+        <SoundToggle />
+        <Toaster position="top-center" theme="dark" richColors />
 
-        <Toaster position="top-center" />
-
-        <Navbar />
-
-        <main className="min-h-full flex flex-col mt-[120px] w-full max-w-[1300px]">
-          {children}
-        </main>
+        <SmoothScroll>
+          <Navbar />
+          <main className="min-h-screen w-full flex flex-col relative z-10 pt-20">
+            {children}
+          </main>
+          <Footer />
+        </SmoothScroll>
       </body>
     </html>
   )
