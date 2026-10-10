@@ -315,17 +315,7 @@ export default function HomePage() {
           </div>
 
           {/* Right: Portrait & Status Badge */}
-          <div className="lg:col-span-4 flex flex-col items-center lg:items-end gap-6">
-            <div className="hero-image-wrap relative group w-[220px] md:w-[280px] aspect-[4/5] rounded-2xl overflow-hidden border border-white/20 bg-neutral-900 shadow-2xl">
-              <MorphHuman height={500} theme="mono-dark" interval="10" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-[11px] font-mono text-white/90">
-                <span>{personalInfo.brandName}</span>
-                <span className="border border-white/30 px-2 py-0.5 rounded-full text-[9px] bg-black/50">
-                  DEVELOPER
-                </span>
-              </div>
-            </div>
+           <MorphHuman height={500} theme="mono-dark" interval="10" />
 
             {/* Quick action buttons (CV Download, About Link) */}
             <div className="hero-meta flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full">
