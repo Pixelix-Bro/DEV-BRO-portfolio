@@ -8,7 +8,7 @@ export default function MorphHuman({
   theme = 'color', // 'mono-dark' | 'mono-light' | 'color'
   interval = 10,
   auto = true,
-  labels = true,
+  labels = false,
   controls = true,
   zoom = false,
   onChange,

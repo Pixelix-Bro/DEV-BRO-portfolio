@@ -315,7 +315,9 @@ export default function HomePage() {
           </div>
 
           {/* Right: Portrait & Status Badge */}
-           <MorphHuman height={500} theme="mono-dark" interval="10" />
+          <div className="lg:col-span-4 flex flex-col items-center lg:items-end gap-6">
+            
+            </div>
 
             {/* Quick action buttons (CV Download, About Link) */}
             <div className="hero-meta flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full">

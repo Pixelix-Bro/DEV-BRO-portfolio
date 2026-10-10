@@ -1,37 +1,26 @@
 /*!
- * <morph-human> — zarrachalardan yaratilgan raqamli odam komponenti
- * Yuradi, boshqariladi va har N soniyada boshqa shaklga aylanadi.
+ * <morph-human> v2 — REALISTIK zarrachali raqamli komponent
+ * Odam (soch, yuz, kiyim, barmoqlar), noutbuk, miya, Yer (bulut, atmosfera, Oy),
+ * raketa (olov, tutun) va dizayn mольберти (qalam, qog'oz) — hammasi real yoritish bilan.
  *
  * Ishlatish:
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
  *   <script src="morph-human.js"></script>
- *   <morph-human style="height:560px"></morph-human>
+ *   <morph-human style="height:620px"></morph-human>
  *
- * Atributlar:
- *   interval="10"      shakl almashish vaqti (soniya)
- *   auto="false"       avtomatik almashishni o'chirish
- *   labels="false"     nom va nuqtalarni yashirish
- *   controls="false"   sensorli joystikni yashirish
- *   zoom               g'ildirak bilan yaqinlashtirishni yoqish
- *   theme="mono-dark"   qora fonda oq zarrachalar (oq-qora sayt)
- *   theme="mono-light"  oq fonda qora zarrachalar (oq-qora sayt)
- *   (CSS: --mh-bg, --mh-text, --mh-accent bilan ranglarni o'zgartirish mumkin)
- *
- * Metodlar:  el.next()  el.prev()  el.goTo(i)
- * Hodisa:    "shapechange"  (detail: { index, id, label })
- *
- * Boshqaruv (komponent ustida turganda): W A S D / strelkalar, Shift, Space.
+ * Atributlar: interval="10"  auto="false"  labels="false"  controls="false"  zoom
+ *             count="45000" (zarrachalar soni, ko'p = realistikroq)
+ *             theme="mono-dark" | "mono-light"
+ * Metodlar:   el.next()  el.prev()  el.goTo(i)       Hodisa: "shapechange"
+ * Boshqaruv:  W A S D / strelkalar, Shift, Space, sichqoncha bilan aylantirish.
  */
 ;(function () {
   'use strict'
-
   var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
   var TAU = Math.PI * 2,
     rnd = Math.random
 
-  /* ================================================================
-     Matematika va yuzadan nuqta tanlash
-     ================================================================ */
+  /* ================= Matematika ================= */
   function clamp(v, a, b) {
     return Math.max(a, Math.min(b, v))
   }
@@ -59,9 +48,8 @@
   }
   function basis(d) {
     var ax = Math.abs(d[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]
-    var u = norm3(cross(d, ax)),
-      v = cross(d, u)
-    return [u, v]
+    var u = norm3(cross(d, ax))
+    return [u, cross(d, u)]
   }
   function hsl(h, s, l, out, o) {
     h = ((h % 1) + 1) % 1
@@ -74,7 +62,11 @@
     out[o + 1] = f(8)
     out[o + 2] = f(4)
   }
-  // 3D qiymat shovqini (qit'alar uchun)
+  function H(h, s, l) {
+    var o = [0, 0, 0]
+    hsl(h, s, l, o, 0)
+    return o
+  }
   function hash3(x, y, z) {
     var h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453
     return h - Math.floor(h)
@@ -82,8 +74,8 @@
   function vnoise(x, y, z) {
     var xi = Math.floor(x),
       yi = Math.floor(y),
-      zi = Math.floor(z)
-    var xf = x - xi,
+      zi = Math.floor(z),
+      xf = x - xi,
       yf = y - yi,
       zf = z - zi
     var u = xf * xf * (3 - 2 * xf),
@@ -114,71 +106,66 @@
     )
   }
 
-  /* Primitivlar: w = yuza (og'irlik), s(out) = [x,y,z,nx,ny,nz,t] yozadi, col = rang funksiyasi */
+  /* ================= Primitivlar =================
+     s(out) -> out[0..2]=pozitsiya, [3..5]=normal, [6]=rang parametri
+     o.spec = yaltiroqlik, o.em = nur sochish (1 = yorqin, 2 = tungi chiroq, 3 = atmosfera) */
+  function P(o, w, s) {
+    return { w: w * (o.boost || 1), meta: o.meta, col: o.col, spec: o.spec, em: o.em, s: s }
+  }
+
   function tube(a, b, r0, r1, o) {
     o = o || {}
-    var zs = o.zs || 1
     var d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
-      len = Math.hypot(d[0], d[1], d[2])
-    var dn = [d[0] / len, d[1] / len, d[2] / len],
-      uv = basis(dn),
+      len = Math.hypot(d[0], d[1], d[2]),
+      dn = [d[0] / len, d[1] / len, d[2] / len]
+    var uv = basis(dn),
       u = uv[0],
-      v = uv[1]
-    var side = Math.PI * (r0 + r1) * len,
+      v = uv[1],
+      side = Math.PI * (r0 + r1) * len,
       cap = o.noCap ? 0 : 2 * Math.PI * (r0 * r0 + r1 * r1),
-      rm = Math.max(r0, r1)
-    return {
-      w: (side + cap) * (o.boost || 1),
-      meta: o.meta,
-      col: o.col,
-      s: function (out) {
-        var px, py, pz, nx, ny, nz, l
-        if (rnd() * (side + cap) < side) {
-          var t
-          do {
-            t = rnd()
-          } while (rnd() * rm > r0 + (r1 - r0) * t)
-          var th = rnd() * TAU,
-            c = Math.cos(th),
-            s = Math.sin(th),
-            r = r0 + (r1 - r0) * t
-          nx = c * u[0] + s * v[0]
-          ny = c * u[1] + s * v[1]
-          nz = c * u[2] + s * v[2]
-          px = a[0] + d[0] * t + nx * r
-          py = a[1] + d[1] * t + ny * r
-          pz = a[2] + d[2] * t + nz * r * zs
-          out[6] = t
-        } else {
-          var atB = rnd() * (r0 * r0 + r1 * r1) > r0 * r0,
-            rr = atB ? r1 : r0,
-            e = atB ? b : a,
-            sg = atB ? 1 : -1
-          var q = unit()
-          if ((q[0] * dn[0] + q[1] * dn[1] + q[2] * dn[2]) * sg < 0) q = [-q[0], -q[1], -q[2]]
-          nx = q[0]
-          ny = q[1]
-          nz = q[2]
-          px = e[0] + nx * rr
-          py = e[1] + ny * rr
-          pz = e[2] + nz * rr * zs
-          out[6] = atB ? 1 : 0
-        }
-        if (zs !== 1) {
-          nz /= zs
-          l = Math.hypot(nx, ny, nz) || 1
-          nx /= l
-          ny /= l
-          nz /= l
-        }
-        out[0] = px
-        out[1] = py
-        out[2] = pz
-        out[3] = nx
-        out[4] = ny
-        out[5] = nz
-      },
-    }
+      rm = Math.max(r0, r1),
+      kk = (r0 - r1) / len
+    return P(o, side + cap, function (out) {
+      var nx, ny, nz, l
+      if (rnd() * (side + cap) < side) {
+        var t
+        do {
+          t = rnd()
+        } while (rnd() * rm > r0 + (r1 - r0) * t)
+        var th = rnd() * TAU,
+          c = Math.cos(th),
+          s = Math.sin(th),
+          r = r0 + (r1 - r0) * t
+        nx = c * u[0] + s * v[0]
+        ny = c * u[1] + s * v[1]
+        nz = c * u[2] + s * v[2]
+        out[0] = a[0] + d[0] * t + nx * r
+        out[1] = a[1] + d[1] * t + ny * r
+        out[2] = a[2] + d[2] * t + nz * r
+        nx += dn[0] * kk
+        ny += dn[1] * kk
+        nz += dn[2] * kk
+        out[6] = t
+      } else {
+        var atB = rnd() * (r0 * r0 + r1 * r1) > r0 * r0,
+          rr = atB ? r1 : r0,
+          e = atB ? b : a,
+          sg = atB ? 1 : -1,
+          q = unit()
+        if ((q[0] * dn[0] + q[1] * dn[1] + q[2] * dn[2]) * sg < 0) q = [-q[0], -q[1], -q[2]]
+        nx = q[0]
+        ny = q[1]
+        nz = q[2]
+        out[0] = e[0] + nx * rr
+        out[1] = e[1] + ny * rr
+        out[2] = e[2] + nz * rr
+        out[6] = atB ? 1 : 0
+      }
+      l = Math.hypot(nx, ny, nz) || 1
+      out[3] = nx / l
+      out[4] = ny / l
+      out[5] = nz / l
+    })
   }
   function ell(c, r, o) {
     o = o || {}
@@ -190,22 +177,17 @@
         (Math.pow(r[0] * r[1], p) + Math.pow(r[0] * r[2], p) + Math.pow(r[1] * r[2], p)) / 3,
         1 / p
       )
-    return {
-      w: area * (o.boost || 1),
-      meta: o.meta,
-      col: o.col,
-      s: function (out) {
-        var q = unit(),
-          n = norm3([q[0] / r[0], q[1] / r[1], q[2] / r[2]])
-        out[0] = c[0] + q[0] * r[0]
-        out[1] = c[1] + q[1] * r[1]
-        out[2] = c[2] + q[2] * r[2]
-        out[3] = n[0]
-        out[4] = n[1]
-        out[5] = n[2]
-        out[6] = 0
-      },
-    }
+    return P(o, area, function (out) {
+      var q = unit(),
+        n = norm3([q[0] / r[0], q[1] / r[1], q[2] / r[2]])
+      out[0] = c[0] + q[0] * r[0]
+      out[1] = c[1] + q[1] * r[1]
+      out[2] = c[2] + q[2] * r[2]
+      out[3] = n[0]
+      out[4] = n[1]
+      out[5] = n[2]
+      out[6] = q[1] * 0.5 + 0.5
+    })
   }
   function loft(sec, o) {
     // sec: [y, rx, rz, cz]
@@ -222,36 +204,34 @@
       segs.push(ar)
       tot += ar
     }
-    return {
-      w: tot * (o.boost || 1),
-      meta: o.meta,
-      col: o.col,
-      s: function (out) {
-        var q = rnd() * tot,
-          k = 0
-        while (k < segs.length - 1 && q > segs[k]) {
-          q -= segs[k]
-          k++
-        }
-        var a = sec[k],
-          b = sec[k + 1],
-          t = rnd()
-        var rx = a[1] + (b[1] - a[1]) * t,
-          rz = a[2] + (b[2] - a[2]) * t
-        var cz = (a[3] || 0) + ((b[3] || 0) - (a[3] || 0)) * t
-        var th = rnd() * TAU,
-          c = Math.cos(th),
-          s = Math.sin(th)
-        var n = norm3([c / Math.max(rx, 1e-3), 0, s / Math.max(rz, 1e-3)])
-        out[0] = rx * c
-        out[1] = a[0] + (b[0] - a[0]) * t
-        out[2] = cz + rz * s
-        out[3] = n[0]
-        out[4] = n[1]
-        out[5] = n[2]
-        out[6] = a[0] + (b[0] - a[0]) * t
-      },
-    }
+    return P(o, tot, function (out) {
+      var q = rnd() * tot,
+        k = 0
+      while (k < segs.length - 1 && q > segs[k]) {
+        q -= segs[k]
+        k++
+      }
+      var a = sec[k],
+        b = sec[k + 1],
+        t = rnd(),
+        dy = b[0] - a[0] || 1e-4
+      var rx = Math.max(a[1] + (b[1] - a[1]) * t, 1e-3),
+        rz = Math.max(a[2] + (b[2] - a[2]) * t, 1e-3),
+        cz = (a[3] || 0) + ((b[3] || 0) - (a[3] || 0)) * t
+      var th = rnd() * TAU,
+        c = Math.cos(th),
+        s = Math.sin(th),
+        rxp = (b[1] - a[1]) / dy,
+        rzp = (b[2] - a[2]) / dy
+      var n = norm3([c / rx, -((c * c * rxp) / rx + (s * s * rzp) / rz), s / rz])
+      out[0] = rx * c
+      out[1] = a[0] + (b[0] - a[0]) * t
+      out[2] = cz + rz * s
+      out[3] = n[0]
+      out[4] = n[1]
+      out[5] = n[2]
+      out[6] = out[1]
+    })
   }
   function tri(A, B, C, th, o) {
     o = o || {}
@@ -260,176 +240,186 @@
     var cr = cross(e1, e2),
       area = Math.hypot(cr[0], cr[1], cr[2]),
       n = norm3(cr)
-    return {
-      w: area * (o.boost || 1),
-      col: o.col,
-      s: function (out) {
-        var r1 = rnd(),
-          r2 = rnd()
-        if (r1 + r2 > 1) {
-          r1 = 1 - r1
-          r2 = 1 - r2
-        }
-        var sg = rnd() < 0.5 ? 1 : -1
-        out[0] = A[0] + e1[0] * r1 + e2[0] * r2 + n[0] * th * sg
-        out[1] = A[1] + e1[1] * r1 + e2[1] * r2 + n[1] * th * sg
-        out[2] = A[2] + e1[2] * r1 + e2[2] * r2 + n[2] * th * sg
-        out[3] = n[0] * sg
-        out[4] = n[1] * sg
-        out[5] = n[2] * sg
-        out[6] = r1
-      },
-    }
+    return P(o, area, function (out) {
+      var r1 = rnd(),
+        r2 = rnd()
+      if (r1 + r2 > 1) {
+        r1 = 1 - r1
+        r2 = 1 - r2
+      }
+      var sg = rnd() < 0.5 ? 1 : -1
+      out[0] = A[0] + e1[0] * r1 + e2[0] * r2 + n[0] * th * sg
+      out[1] = A[1] + e1[1] * r1 + e2[1] * r2 + n[1] * th * sg
+      out[2] = A[2] + e1[2] * r1 + e2[2] * r2 + n[2] * th * sg
+      out[3] = n[0] * sg
+      out[4] = n[1] * sg
+      out[5] = n[2] * sg
+      out[6] = r1
+    })
   }
   function disc(c, R, o) {
     o = o || {}
-    return {
-      w: Math.PI * R * R * (o.boost || 1),
-      col: o.col,
-      s: function (out) {
-        var r = R * Math.sqrt(rnd()),
-          th = rnd() * TAU
-        out[0] = c[0] + r * Math.cos(th)
-        out[1] = c[1] + r * Math.sin(th)
-        out[2] = c[2]
-        out[3] = 0
-        out[4] = 0
-        out[5] = 1
-        out[6] = r / R
-      },
-    }
-  }
-  function ringZ(c, R, r, o) {
-    // z o'qi atrofidagi halqa
-    o = o || {}
-    return {
-      w: 4 * Math.PI * Math.PI * R * r * (o.boost || 1),
-      col: o.col,
-      s: function (out) {
-        var ph = rnd() * TAU,
-          th = rnd() * TAU,
-          cp = Math.cos(ph),
-          sp = Math.sin(ph),
-          ct = Math.cos(th),
-          st = Math.sin(th)
-        out[0] = c[0] + (R + r * ct) * cp
-        out[1] = c[1] + (R + r * ct) * sp
-        out[2] = c[2] + r * st
-        out[3] = ct * cp
-        out[4] = ct * sp
-        out[5] = st
-        out[6] = ph / TAU
-      },
-    }
+    return P(o, Math.PI * R * R, function (out) {
+      var r = R * Math.sqrt(rnd()),
+        th = rnd() * TAU
+      out[0] = c[0] + r * Math.cos(th)
+      out[1] = c[1] + r * Math.sin(th)
+      out[2] = c[2]
+      out[3] = 0
+      out[4] = 0
+      out[5] = 1
+      out[6] = r / R
+    })
   }
   function ringY(y, R, r, o) {
-    // y o'qi atrofidagi halqa
     o = o || {}
-    return {
-      w: 4 * Math.PI * Math.PI * R * r * (o.boost || 1),
-      col: o.col,
-      s: function (out) {
-        var ph = rnd() * TAU,
-          th = rnd() * TAU,
-          cp = Math.cos(ph),
-          sp = Math.sin(ph),
-          ct = Math.cos(th),
-          st = Math.sin(th)
-        out[0] = (R + r * ct) * cp
-        out[1] = y + r * st
-        out[2] = (R + r * ct) * sp
-        out[3] = ct * cp
-        out[4] = st
-        out[5] = ct * sp
-        out[6] = ph / TAU
-      },
-    }
+    return P(o, 4 * Math.PI * Math.PI * R * r, function (out) {
+      var ph = rnd() * TAU,
+        th = rnd() * TAU,
+        cp = Math.cos(ph),
+        sp = Math.sin(ph),
+        ct = Math.cos(th),
+        st = Math.sin(th)
+      out[0] = (R + r * ct) * cp
+      out[1] = y + r * st
+      out[2] = (R + r * ct) * sp
+      out[3] = ct * cp
+      out[4] = st
+      out[5] = ct * sp
+      out[6] = ph / TAU
+    })
   }
-  function box(c, h, o) {
+  function cub(c, h, o) {
+    // h = [hx,hy,hz]
     o = o || {}
-    return {
-      w: 24 * h * h * (o.boost || 1),
-      col: o.col,
-      s: function (out) {
-        var ax = Math.floor(rnd() * 3),
-          sg = rnd() < 0.5 ? -1 : 1,
-          p = [(rnd() * 2 - 1) * h, (rnd() * 2 - 1) * h, (rnd() * 2 - 1) * h]
-        p[ax] = sg * h
-        out[0] = c[0] + p[0]
-        out[1] = c[1] + p[1]
-        out[2] = c[2] + p[2]
-        out[3] = ax === 0 ? sg : 0
-        out[4] = ax === 1 ? sg : 0
-        out[5] = ax === 2 ? sg : 0
-        out[6] = 0
-      },
-    }
+    var wx = 4 * h[1] * h[2],
+      wy = 4 * h[0] * h[2],
+      wz = 4 * h[0] * h[1],
+      tt = wx + wy + wz
+    return P(o, 2 * tt, function (out) {
+      var r = rnd() * tt,
+        ax = r < wx ? 0 : r < wx + wy ? 1 : 2,
+        sg = rnd() < 0.5 ? -1 : 1,
+        p = [(rnd() * 2 - 1) * h[0], (rnd() * 2 - 1) * h[1], (rnd() * 2 - 1) * h[2]]
+      p[ax] = sg * h[ax]
+      out[0] = c[0] + p[0]
+      out[1] = c[1] + p[1]
+      out[2] = c[2] + p[2]
+      out[3] = ax === 0 ? sg : 0
+      out[4] = ax === 1 ? sg : 0
+      out[5] = ax === 2 ? sg : 0
+      out[6] = (p[0] / h[0] + 1) / 2
+    })
   }
   function line(a, b, lw, o) {
     o = o || {}
     var len = dist(a, b)
-    return {
-      w: len * lw,
-      col: o.col,
-      s: function (out) {
-        var t = rnd(),
-          j = o.jit || 0.004,
-          n = unit()
-        out[0] = a[0] + (b[0] - a[0]) * t + (rnd() - 0.5) * j
-        out[1] = a[1] + (b[1] - a[1]) * t + (rnd() - 0.5) * j
-        out[2] = a[2] + (b[2] - a[2]) * t + (rnd() - 0.5) * j
-        out[3] = n[0]
-        out[4] = n[1]
-        out[5] = n[2]
-        out[6] = t
-      },
-    }
+    return P(o, len * lw, function (out) {
+      var t = rnd(),
+        j = o.jit == null ? 0.004 : o.jit,
+        n = o.nrm || unit()
+      out[0] = a[0] + (b[0] - a[0]) * t + (rnd() - 0.5) * j
+      out[1] = a[1] + (b[1] - a[1]) * t + (rnd() - 0.5) * j
+      out[2] = a[2] + (b[2] - a[2]) * t + (rnd() - 0.5) * j
+      out[3] = n[0]
+      out[4] = n[1]
+      out[5] = n[2]
+      out[6] = t
+    })
   }
   function curve(fn, steps, r, o) {
     o = o || {}
-    var P = [],
+    var Pt = [],
       L = [0],
       i
-    for (i = 0; i <= steps; i++) P.push(fn(i / steps))
-    for (i = 1; i <= steps; i++) L[i] = L[i - 1] + dist(P[i], P[i - 1])
+    for (i = 0; i <= steps; i++) Pt.push(fn(i / steps))
+    for (i = 1; i <= steps; i++) L[i] = L[i - 1] + dist(Pt[i], Pt[i - 1])
     var len = L[steps]
+    return P(o, TAU * r * len, function (out) {
+      var u = rnd() * len,
+        k = 1
+      while (k < steps && L[k] < u) k++
+      var a = Pt[k - 1],
+        b = Pt[k],
+        f = (u - L[k - 1]) / (L[k] - L[k - 1] || 1)
+      var d = norm3([b[0] - a[0], b[1] - a[1], b[2] - a[2]]),
+        uv = basis(d),
+        th = rnd() * TAU,
+        c = Math.cos(th),
+        s = Math.sin(th)
+      var nx = c * uv[0][0] + s * uv[1][0],
+        ny = c * uv[0][1] + s * uv[1][1],
+        nz = c * uv[0][2] + s * uv[1][2]
+      out[0] = a[0] + (b[0] - a[0]) * f + nx * r
+      out[1] = a[1] + (b[1] - a[1]) * f + ny * r
+      out[2] = a[2] + (b[2] - a[2]) * f + nz * r
+      out[3] = nx
+      out[4] = ny
+      out[5] = nz
+      out[6] = (k - 1 + f) / steps
+    })
+  }
+  function hex(a, b, r, o) {
+    // oltiburchakli prizma (qalam tanasi)
+    o = o || {}
+    var d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
+      len = Math.hypot(d[0], d[1], d[2]),
+      uv = basis(norm3(d)),
+      U = uv[0],
+      V = uv[1],
+      ap = r * 0.8660254
+    return P(o, 6 * r * len, function (out) {
+      var k = Math.floor(rnd() * 6),
+        th = (k * Math.PI) / 3 + Math.PI / 6,
+        c = Math.cos(th),
+        s = Math.sin(th),
+        u = rnd(),
+        w = (rnd() - 0.5) * r
+      var rx = c * U[0] + s * V[0],
+        ry = c * U[1] + s * V[1],
+        rz = c * U[2] + s * V[2],
+        tx = -s * U[0] + c * V[0],
+        ty = -s * U[1] + c * V[1],
+        tz = -s * U[2] + c * V[2]
+      out[0] = a[0] + d[0] * u + rx * ap + tx * w
+      out[1] = a[1] + d[1] * u + ry * ap + ty * w
+      out[2] = a[2] + d[2] * u + rz * ap + tz * w
+      out[3] = rx
+      out[4] = ry
+      out[5] = rz
+      out[6] = u + k
+    })
+  }
+  function rotX(p, pv, ang) {
+    // primitivni X o'qi atrofida aylantirish
+    var c = Math.cos(ang),
+      s = Math.sin(ang),
+      f = p.s
     return {
-      w: TAU * r * len * (o.boost || 1),
-      col: o.col,
-      meta: o.meta,
+      w: p.w,
+      meta: p.meta,
+      col: p.col,
+      spec: p.spec,
+      em: p.em,
       s: function (out) {
-        var u = rnd() * len,
-          k = 1
-        while (k < steps && L[k] < u) k++
-        var a = P[k - 1],
-          b = P[k],
-          f = (u - L[k - 1]) / (L[k] - L[k - 1] || 1)
-        var d = norm3([b[0] - a[0], b[1] - a[1], b[2] - a[2]]),
-          uv = basis(d),
-          th = rnd() * TAU,
-          c = Math.cos(th),
-          s = Math.sin(th)
-        var nx = c * uv[0][0] + s * uv[1][0],
-          ny = c * uv[0][1] + s * uv[1][1],
-          nz = c * uv[0][2] + s * uv[1][2]
-        out[0] = a[0] + (b[0] - a[0]) * f + nx * r
-        out[1] = a[1] + (b[1] - a[1]) * f + ny * r
-        out[2] = a[2] + (b[2] - a[2]) * f + nz * r
-        out[3] = nx
-        out[4] = ny
-        out[5] = nz
-        out[6] = (k - 1 + f) / steps
+        f(out)
+        var y = out[1] - pv[1],
+          z = out[2] - pv[2]
+        out[1] = pv[1] + y * c - z * s
+        out[2] = pv[2] + y * s + z * c
+        var ny = out[4],
+          nz = out[5]
+        out[4] = ny * c - nz * s
+        out[5] = ny * s + nz * c
       },
     }
   }
 
-  // Yorug'lik (qotirilgan soya): yuqori-old-o'ngdan
-  var LX = 0.37,
-    LY = 0.69,
-    LZ = 0.72
   function buildShape(prims, N, dynStart, onMeta) {
     var pos = new Float32Array(N * 3),
-      col = new Float32Array(N * 3)
+      col = new Float32Array(N * 3),
+      nrm = new Float32Array(N * 3),
+      mat = new Float32Array(N * 2)
     var cum = [],
       tot = 0,
       i
@@ -450,30 +440,43 @@
       var p = prims[lo]
       out[6] = 0
       p.s(out)
-      pos[i * 3] = out[0]
-      pos[i * 3 + 1] = out[1]
-      pos[i * 3 + 2] = out[2]
-      var c = p.col ? p.col(out[0], out[1], out[2], out[6]) : [0.55, 0.8, 0.55]
-      var lam = Math.max(0, out[3] * LX + out[4] * LY + out[5] * LZ)
-      hsl(c[0], c[1], Math.min(c[2] * (0.6 + 0.7 * lam), 0.9), col, i * 3)
+      var i3 = i * 3
+      pos[i3] = out[0]
+      pos[i3 + 1] = out[1]
+      pos[i3 + 2] = out[2]
+      nrm[i3] = out[3]
+      nrm[i3 + 1] = out[4]
+      nrm[i3 + 2] = out[5]
+      var c = p.col ? p.col(out[0], out[1], out[2], out[6]) : [0.6, 0.6, 0.6]
+      col[i3] = c[0]
+      col[i3 + 1] = c[1]
+      col[i3 + 2] = c[2]
+      mat[i * 2] = p.spec == null ? 0.15 : p.spec
+      mat[i * 2 + 1] = p.em || 0
       if (onMeta && p.meta) onMeta(i, p.meta)
     }
-    return { pos: pos, col: col, dynStart: dynStart, dyn: null, mode: 'spin' }
-  }
-  function fn(x) {
-    return function () {
-      return x
+    for (i = dynStart; i < N; i++) {
+      nrm[i * 3 + 1] = 1
+      col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0.5
+    }
+    return {
+      pos: pos,
+      col: col,
+      nrm: nrm,
+      mat: mat,
+      dynStart: dynStart,
+      dyn: null,
+      mode: 'spin',
+      sz: clamp(1.55 * Math.sqrt(tot / Math.max(1, dynStart)), 0.007, 0.03),
     }
   }
 
-  /* ================================================================
-     1. ODAM — anatomik yuklangan tana
-     ================================================================ */
+  /* ================= 1. ODAM ================= */
   function M(type, side, p1, p2) {
     return { type: type, side: side, y1: p1[0], z1: p1[1], y2: p2[0], z2: p2[1] }
   }
   function buildHuman(N) {
-    var H = {
+    var HB = {
       type: new Uint8Array(N),
       side: new Int8Array(N),
       y1: new Float32Array(N),
@@ -483,19 +486,32 @@
     }
     var prims = [],
       M0 = M(0, 0, [0, 0], [0, 0])
-    function body(lBoost) {
-      return function (x, y) {
-        return [
-          0.66 - 0.15 * clamp(y / 1.7, 0, 1) + (rnd() - 0.5) * 0.015,
-          0.85,
-          0.54 + (lBoost || 0),
-        ]
-      }
+    var SK = [0.84, 0.62, 0.49],
+      TEE = [0.8, 0.82, 0.86],
+      JEAN = [0.12, 0.2, 0.38],
+      HAIR = [0.13, 0.085, 0.06],
+      SHOE = [0.9, 0.9, 0.92],
+      SOLE = [0.12, 0.12, 0.13]
+    function nz(x, y, z, f, a) {
+      return (fbm(x * f, y * f, z * f) - 0.5) * a
     }
-    var eyeCol = function () {
-      return [0.5, 0.35, 0.93]
+    function skin(x, y, z) {
+      var n = 1 + nz(x, y, z, 22, 0.16)
+      return [SK[0] * n, SK[1] * n, SK[2] * n]
     }
-    // Tana (ko'krak, bel, chanoq)
+    function tee(x, y, z) {
+      var n = 1 + nz(x, y, z, 60, 0.12)
+      return [TEE[0] * n, TEE[1] * n, TEE[2] * n]
+    }
+    function jean(x, y, z) {
+      var n = 1 + nz(x, y, z, 70, 0.18) + Math.sin(y * 160) * 0.025
+      return [JEAN[0] * n, JEAN[1] * n, JEAN[2] * n]
+    }
+    function shoeCol(x, y) {
+      return y < 0.03 ? SOLE : SHOE
+    }
+    var SP = 0.2
+    // Tana: ko'ylak + belbog'dan pastda jinsi
     prims.push(
       loft(
         [
@@ -509,469 +525,851 @@
           [0.93, 0.185, 0.105, 0],
           [0.88, 0.17, 0.095, 0],
         ],
-        { meta: M0, col: body(0) }
+        {
+          meta: M0,
+          spec: 0.06,
+          col: function (x, y, z) {
+            return y > 1.03 ? tee(x, y, z) : jean(x, y, z)
+          },
+        }
       )
     )
-    prims.push(tube([0, 1.43, 0], [0, 1.55, 0.012], 0.052, 0.046, { meta: M0, col: body(0.05) })) // bo'yin
-    prims.push(ell([0, 1.675, 0.012], [0.093, 0.117, 0.106], { meta: M0, col: body(0.08) })) // bosh
-    prims.push(ell([0, 1.615, 0.04], [0.062, 0.055, 0.062], { meta: M0, col: body(0.08) })) // iyak
-    prims.push(ell([0, 1.665, 0.115], [0.014, 0.02, 0.02], { meta: M0, col: body(0.12), boost: 3 })) // burun
     prims.push(
-      ell([-0.036, 1.69, 0.097], [0.012, 0.008, 0.007], { meta: M0, col: eyeCol, boost: 7 })
-    ) // ko'zlar
+      tube([0, 1.43, 0], [0, 1.56, 0.012], 0.052, 0.046, { meta: M0, spec: SP, col: skin })
+    ) // bo'yin
     prims.push(
-      ell([0.036, 1.69, 0.097], [0.012, 0.008, 0.007], { meta: M0, col: eyeCol, boost: 7 })
-    )
+      ell([0, 1.675, 0.012], [0.093, 0.117, 0.106], { meta: M0, spec: SP, col: skin, boost: 1.2 })
+    ) // bosh
+    prims.push(ell([0, 1.612, 0.042], [0.062, 0.055, 0.062], { meta: M0, spec: SP, col: skin })) // iyak
     prims.push(
-      ell([-0.094, 1.67, 0], [0.012, 0.026, 0.02], { meta: M0, col: body(0.06), boost: 2 })
+      ell([0, 1.664, 0.118], [0.014, 0.022, 0.02], { meta: M0, spec: 0.3, col: skin, boost: 3 })
+    ) // burun
+    prims.push(
+      ell([-0.094, 1.67, 0], [0.012, 0.026, 0.02], { meta: M0, spec: SP, col: skin, boost: 2 })
     ) // quloqlar
-    prims.push(ell([0.094, 1.67, 0], [0.012, 0.026, 0.02], { meta: M0, col: body(0.06), boost: 2 }))
+    prims.push(
+      ell([0.094, 1.67, 0], [0.012, 0.026, 0.02], { meta: M0, spec: SP, col: skin, boost: 2 })
+    )
+    ;[-1, 1].forEach(function (sd) {
+      // ko'zlar
+      prims.push(
+        ell([sd * 0.036, 1.69, 0.104], [0.0135, 0.0095, 0.009], {
+          meta: M0,
+          spec: 0.85,
+          col: function () {
+            return [0.93, 0.93, 0.91]
+          },
+          boost: 9,
+        })
+      )
+      prims.push(
+        ell([sd * 0.036, 1.69, 0.1135], [0.0068, 0.0068, 0.0045], {
+          meta: M0,
+          spec: 0.9,
+          col: function () {
+            return [0.22, 0.34, 0.52]
+          },
+          boost: 12,
+        })
+      )
+      prims.push(
+        ell([sd * 0.036, 1.69, 0.1165], [0.0032, 0.0032, 0.002], {
+          meta: M0,
+          spec: 1,
+          col: function () {
+            return [0.01, 0.01, 0.02]
+          },
+          boost: 14,
+        })
+      )
+      prims.push(
+        tube([sd * 0.018, 1.713, 0.104], [sd * 0.056, 1.718, 0.096], 0.0042, 0.0036, {
+          meta: M0,
+          spec: 0.3,
+          col: function () {
+            return HAIR
+          },
+          boost: 3,
+        })
+      ) // qosh
+    })
+    prims.push(
+      ell([0, 1.64, 0.108], [0.022, 0.0065, 0.008], {
+        meta: M0,
+        spec: 0.45,
+        col: function () {
+          return [0.66, 0.32, 0.33]
+        },
+        boost: 5,
+      })
+    ) // lablar
+    prims.push(
+      ell([0, 1.627, 0.106], [0.024, 0.0075, 0.009], {
+        meta: M0,
+        spec: 0.45,
+        col: function () {
+          return [0.7, 0.34, 0.35]
+        },
+        boost: 5,
+      })
+    )
+    prims.push({
+      w: 0.11,
+      meta: M0,
+      spec: 0.35, // soch
+      col: function () {
+        var v = 0.7 + 0.8 * rnd()
+        return [HAIR[0] * v, HAIR[1] * v, HAIR[2] * v]
+      },
+      s: function (out) {
+        var q,
+          th,
+          tr = 0
+        do {
+          q = unit()
+          th =
+            (q[2] > 0 ? 0.28 + 1.15 * q[2] : 0.28 + 0.75 * q[2]) +
+            (vnoise(q[0] * 6, q[1] * 6, q[2] * 6) - 0.5) * 0.22
+          tr++
+        } while (q[1] < th && tr < 60)
+        var k = 1 + 0.05 * rnd()
+        out[0] = q[0] * 0.099 * k
+        out[1] = 1.682 + q[1] * 0.123 * k
+        out[2] = 0.006 + q[2] * 0.112 * k
+        out[3] = q[0]
+        out[4] = q[1]
+        out[5] = q[2]
+        out[6] = 0
+      },
+    })
     ;[-1, 1].forEach(function (sd) {
       var sh = [sd * 0.255, 1.4, 0],
         el = [sd * 0.285, 1.13, 0.005],
         wr = [sd * 0.292, 0.875, 0.01]
       var m1 = M(1, sd, [1.4, 0], [1.13, 0.005]),
         m2 = M(2, sd, [1.4, 0], [1.13, 0.005])
-      prims.push(ell(sh, [0.058, 0.062, 0.058], { meta: m1, col: body(0.02) }))
-      prims.push(tube(sh, el, 0.052, 0.041, { meta: m1, col: body(0) }))
-      prims.push(tube(el, wr, 0.041, 0.03, { meta: m2, col: body(0) }))
+      prims.push(ell(sh, [0.058, 0.062, 0.058], { meta: m1, spec: 0.08, col: tee }))
       prims.push(
-        ell([sd * 0.293, 0.815, 0.015], [0.032, 0.068, 0.022], { meta: m2, col: body(0.06) })
+        tube(sh, el, 0.052, 0.041, {
+          meta: m1,
+          spec: 0.1,
+          col: function (x, y, z, t) {
+            return t < 0.55 ? tee(x, y, z) : skin(x, y, z)
+          },
+        })
       )
-      prims.push(ell([sd * 0.31, 0.85, 0.045], [0.012, 0.03, 0.014], { meta: m2, col: body(0.06) }))
+      prims.push(tube(el, wr, 0.041, 0.03, { meta: m2, spec: SP, col: skin }))
+      var wx = sd * 0.293 // kaft va barmoqlar
+      prims.push(
+        ell([wx, 0.835, 0.014], [0.03, 0.05, 0.017], { meta: m2, spec: SP, col: skin, boost: 1.3 })
+      )
+      ;[-0.021, -0.007, 0.007, 0.021].forEach(function (dx, fi) {
+        var ln = [0.062, 0.075, 0.07, 0.054][fi],
+          x = wx + dx
+        prims.push(
+          tube([x, 0.8, 0.012], [x, 0.8 - ln, 0.026], 0.0085, 0.0062, {
+            meta: m2,
+            spec: SP,
+            col: skin,
+            boost: 2.2,
+          })
+        )
+      })
+      prims.push(
+        tube([wx - sd * 0.03, 0.845, 0.02], [wx - sd * 0.036, 0.785, 0.042], 0.011, 0.0085, {
+          meta: m2,
+          spec: SP,
+          col: skin,
+          boost: 2.2,
+        })
+      )
       var hp = [sd * 0.097, 0.95, 0],
         kn = [sd * 0.1, 0.52, 0.012],
         an = [sd * 0.1, 0.085, -0.005]
       var m3 = M(3, sd, [0.95, 0], [0.52, 0.012]),
         m4 = M(4, sd, [0.95, 0], [0.52, 0.012])
-      prims.push(ell(hp, [0.09, 0.085, 0.09], { meta: m3, col: body(0) }))
-      prims.push(tube(hp, kn, 0.088, 0.058, { meta: m3, col: body(0) }))
-      prims.push(ell(kn, [0.058, 0.06, 0.058], { meta: m4, col: body(0.02) }))
-      prims.push(tube(kn, an, 0.058, 0.036, { meta: m4, col: body(0) }))
+      prims.push(ell(hp, [0.09, 0.085, 0.09], { meta: m3, spec: 0.06, col: jean }))
+      prims.push(tube(hp, kn, 0.088, 0.058, { meta: m3, spec: 0.06, col: jean }))
+      prims.push(ell(kn, [0.058, 0.06, 0.058], { meta: m4, spec: 0.06, col: jean }))
+      prims.push(tube(kn, an, 0.058, 0.038, { meta: m4, spec: 0.06, col: jean }))
       prims.push(
-        tube([sd * 0.1, 0.07, -0.035], [sd * 0.1, 0.04, 0.16], 0.046, 0.032, {
+        tube([sd * 0.1, 0.07, -0.04], [sd * 0.1, 0.045, 0.165], 0.046, 0.034, {
           meta: m4,
-          col: body(0.04),
+          spec: 0.25,
+          col: shoeCol,
+          boost: 1.3,
+        })
+      ) // krossovka
+      prims.push(
+        ell([sd * 0.1, 0.055, 0.15], [0.034, 0.03, 0.03], {
+          meta: m4,
+          spec: 0.25,
+          col: shoeCol,
+          boost: 1.3,
         })
       )
-      prims.push(ell([sd * 0.1, 0.045, 0.16], [0.03, 0.025, 0.025], { meta: m4, col: body(0.06) }))
     })
     var sh = buildShape(prims, N, N, function (i, m) {
-      H.type[i] = m.type
-      H.side[i] = m.side
-      H.y1[i] = m.y1
-      H.z1[i] = m.z1
-      H.y2[i] = m.y2
-      H.z2[i] = m.z2
+      HB.type[i] = m.type
+      HB.side[i] = m.side
+      HB.y1[i] = m.y1
+      HB.z1[i] = m.z1
+      HB.y2[i] = m.y2
+      HB.z2[i] = m.z2
     })
-    sh.human = H
+    sh.human = HB
     return sh
   }
 
-  /* ================================================================
-     2. KOD — </> belgisi + yozuv kursori + ko'tarilayotgan ma'lumot
-     ================================================================ */
+  /* ================= 2. KOD — noutbuk + ekranda kod + gologramma ================= */
   function buildCode(N) {
-    var cy = function (x, y, z, t) {
-      return [0.5 + (rnd() - 0.5) * 0.02, 0.9, 0.58]
+    var prims = [],
+      PV = [0, 0.052, -0.33],
+      TILT = -0.28,
+      i,
+      r,
+      c
+    var ALU = [0.72, 0.74, 0.78],
+      KEY = [0.04, 0.045, 0.055]
+    var alu = function (x, y, z) {
+      var v = 1 + (vnoise(x * 120, y * 120, z * 120) - 0.5) * 0.08
+      return [ALU[0] * v, ALU[1] * v, ALU[2] * v]
     }
-    var pk = function () {
-      return [0.92 + (rnd() - 0.5) * 0.02, 0.85, 0.62]
+    prims.push(cub([0, 0.03, 0.05], [0.55, 0.022, 0.38], { col: alu, spec: 0.55, boost: 1.2 })) // asos
+    prims.push(
+      cub([0, 0.0535, 0.285], [0.15, 0.0008, 0.1], {
+        col: function () {
+          return [0.6, 0.62, 0.66]
+        },
+        spec: 0.6,
+        boost: 2,
+      })
+    ) // trekped
+    for (r = 0; r < 5; r++)
+      for (c = 0; c < 14; c++)
+        prims.push(
+          cub([(c - 6.5) * 0.066, 0.058, -0.25 + r * 0.066], [0.0245, 0.006, 0.0245], {
+            col: function () {
+              return KEY
+            },
+            spec: 0.5,
+            boost: 1.6,
+          })
+        )
+    prims.push(
+      cub([0, 0.058, 0.08], [0.2, 0.006, 0.0245], {
+        col: function () {
+          return KEY
+        },
+        spec: 0.5,
+        boost: 1.6,
+      })
+    )
+    prims.push(
+      tube([-0.4, 0.058, -0.335], [0.4, 0.058, -0.335], 0.014, 0.014, {
+        col: function () {
+          return [0.15, 0.15, 0.17]
+        },
+        spec: 0.5,
+      })
+    )
+    prims.push(
+      rotX(
+        cub([0, 0.392, -0.33], [0.55, 0.34, 0.009], { col: alu, spec: 0.55, boost: 1.4 }),
+        PV,
+        TILT
+      )
+    ) // qopqoq
+    prims.push(
+      rotX(
+        cub([0, 0.415, -0.3205], [0.51, 0.31, 0.0012], {
+          col: function () {
+            return [0.015, 0.02, 0.04]
+          },
+          spec: 0.7,
+          boost: 2.5,
+        }),
+        PV,
+        TILT
+      )
+    ) // ekran
+    var KW = [1, 0.38, 0.62],
+      FN = [0.42, 0.72, 1],
+      ST = [0.62, 0.92, 0.48],
+      NM = [1, 0.72, 0.3],
+      CM = [0.45, 0.52, 0.65],
+      TX = [0.9, 0.92, 1]
+    var pal = [KW, FN, ST, NM, TX, TX, FN, CM],
+      ind = [0, 0, 1, 1, 2, 2, 2, 1, 1, 0, 0, 1, 2, 2, 1, 0]
+    function codeRow(y, x0, segs) {
+      var tot = 0,
+        st = []
+      segs.forEach(function (s) {
+        st.push(x0 + tot)
+        tot += s[0]
+      })
+      return {
+        w: tot * 0.03,
+        em: 1,
+        col: function (x, yy, z, k) {
+          return segs[k][1]
+        },
+        s: function (out) {
+          var q = rnd() * tot,
+            k = 0,
+            acc = 0
+          while (k < segs.length - 1 && q > acc + segs[k][0]) {
+            acc += segs[k][0]
+            k++
+          }
+          out[0] = st[k] + rnd() * (segs[k][0] - 0.012)
+          out[1] = y + (rnd() - 0.5) * 0.009
+          out[2] = -0.318
+          out[3] = 0
+          out[4] = 0
+          out[5] = 1
+          out[6] = k
+        },
+      }
     }
-    var vi = function () {
-      return [0.76 + (rnd() - 0.5) * 0.02, 0.85, 0.6]
+    for (r = 0; r < 16; r++) {
+      var segs = [],
+        n = 2 + Math.floor(rnd() * 4)
+      for (i = 0; i < n; i++) segs.push([0.05 + rnd() * 0.12, pal[Math.floor(rnd() * pal.length)]])
+      prims.push(rotX(codeRow(0.665 - r * 0.034, -0.46 + ind[r] * 0.07, segs), PV, TILT))
     }
-    var am = function () {
-      return [0.11, 0.95, 0.6]
+    // Havodagi neon </> gologrammasi
+    var s = 0.22
+    function Q(x, y) {
+      return [x * s, 1.2 + (y - 0.95) * s, -0.25]
     }
-    var o = function (c) {
-      return { zs: 1.7, col: c }
+    var o1 = function (cc) {
+      return {
+        col: function () {
+          return cc
+        },
+        em: 1,
+        boost: 1.6,
+      }
     }
-    var prims = [
-      tube([-0.46, 1.5, 0], [-0.98, 0.95, 0], 0.054, 0.054, o(cy)),
-      tube([-0.98, 0.95, 0], [-0.46, 0.4, 0], 0.054, 0.054, o(cy)),
-      tube([-0.12, 0.25, 0], [0.14, 1.65, 0], 0.054, 0.054, o(pk)),
-      tube([0.46, 1.5, 0], [0.98, 0.95, 0], 0.054, 0.054, o(vi)),
-      tube([0.98, 0.95, 0], [0.46, 0.4, 0], 0.054, 0.054, o(vi)),
-      tube([0.3, 0.02, 0], [0.72, 0.02, 0], 0.036, 0.036, o(am)),
-    ]
-    var dc = Math.round(N * 0.08),
+    prims.push(
+      tube(Q(-0.46, 1.5), Q(-0.98, 0.95), 0.014, 0.014, o1(H(0.5, 0.9, 0.58))),
+      tube(Q(-0.98, 0.95), Q(-0.46, 0.4), 0.014, 0.014, o1(H(0.5, 0.9, 0.58)))
+    )
+    prims.push(tube(Q(-0.12, 0.25), Q(0.14, 1.65), 0.014, 0.014, o1(H(0.92, 0.85, 0.62))))
+    prims.push(
+      tube(Q(0.46, 1.5), Q(0.98, 0.95), 0.014, 0.014, o1(H(0.76, 0.85, 0.6))),
+      tube(Q(0.98, 0.95), Q(0.46, 0.4), 0.014, 0.014, o1(H(0.76, 0.85, 0.6)))
+    )
+    var dc = Math.round(N * 0.05),
       ds = N - dc,
       sx = [],
-      sz = [],
       sp = [],
-      so = []
-    for (var k = 0; k < dc; k++) {
-      sx.push((rnd() * 2 - 1) * 1.25)
-      sz.push((rnd() - 0.5) * 0.5)
-      sp.push(0.08 + rnd() * 0.18)
+      so = [],
+      cc2 = []
+    for (i = 0; i < dc; i++) {
+      sx.push((rnd() * 2 - 1) * 0.42)
+      sp.push(0.1 + rnd() * 0.2)
       so.push(rnd())
+      cc2.push(rnd())
     }
     var sh = buildShape(prims, N, ds)
     sh.mode = 'sway'
     sh.dyn = function (i, t) {
       var k = i - ds,
         u = fract(t * sp[k] + so[k]),
-        j = i * 3
+        j = i * 3,
+        lum = Math.sin(u * Math.PI)
       sh.pos[j] = sx[k]
-      sh.pos[j + 1] = 0.05 + u * 2.1
-      sh.pos[j + 2] = sz[k]
-      hsl(0.5 + (k % 5) * 0.03, 0.7, 0.35 + 0.35 * Math.sin(u * Math.PI), sh.col, j)
+      sh.pos[j + 1] = 0.72 + u * 0.7
+      sh.pos[j + 2] = -0.29 + Math.sin(u * 6 + k) * 0.03
+      var cl = H(0.5 + cc2[k] * 0.35, 0.8, 0.55 + 0.2 * lum)
+      sh.col[j] = cl[0] * lum
+      sh.col[j + 1] = cl[1] * lum
+      sh.col[j + 2] = cl[2] * lum
+      sh.nrm[j] = 0
+      sh.nrm[j + 1] = 0
+      sh.nrm[j + 2] = 1
+      sh.mat[i * 2] = 0
+      sh.mat[i * 2 + 1] = 1
     }
     return sh
   }
 
-  /* ================================================================
-     3. MIYA — neyron tarmoq (sun'iy intellekt)
-     ================================================================ */
-  function brainPt(u, sd) {
+  /* ================= 3. MIYA — burmalar, egat-ariqlar, miya po'stlog'i, nerv impulslari ================= */
+  function brainField(u, sd) {
     var x = u[0],
       y = u[1],
       z = u[2]
     if (y < -0.3) y = -0.3 + (y + 0.3) * 0.45
-    var f =
-      1 +
-      0.07 * Math.sin(9 * x * sd + 4 * y) * Math.sin(8 * z + 2 * x) +
-      0.04 * Math.sin(15 * y + 6 * z)
-    var px = sd * 0.2 + x * 0.42 * f
-    if (px * sd < 0.03) px = sd * 0.03
-    return [px, 1.2 + y * 0.47 * f, z * 0.66 * f]
+    var n1 = vnoise(x * 4.2 + sd * 3.7, y * 4.2 + 1.3, z * 4.2 + 8.1),
+      n2 = vnoise(x * 9.3 + sd * 1.1, y * 9.3, z * 9.3 + 3.3)
+    var g =
+      Math.exp(-Math.pow((2 * n1 - 1) / 0.16, 2)) * 0.7 +
+      Math.exp(-Math.pow((2 * n2 - 1) / 0.18, 2)) * 0.3 // tor ariqlar
+    var f = 1 - 0.1 * g + 0.04 * (n1 - 0.5)
+    var px = sd * 0.2 + x * 0.42 * f,
+      cl = false
+    if (px * sd < 0.02) {
+      px = sd * 0.02
+      cl = true
+    }
+    return [px, 1.2 + y * 0.47 * f, z * 0.66 * f, g, cl]
   }
   function buildBrain(N) {
-    var nodes = [],
-      i,
-      j
-    for (i = 0; i < 110; i++) nodes.push(brainPt(unit(), rnd() < 0.5 ? -1 : 1))
-    for (i = 0; i < 7; i++) nodes.push([(rnd() - 0.5) * 0.05, 0.88 - i * 0.07, -0.18 + i * 0.01])
-    var seen = {},
-      edges = []
-    function addEdge(a, b) {
-      var key = a < b ? a + '_' + b : b + '_' + a
-      if (!seen[key] && a !== b) {
-        seen[key] = 1
-        edges.push([nodes[a], nodes[b]])
-      }
-    }
-    for (i = 0; i < nodes.length; i++) {
-      var ds = []
-      for (j = 0; j < nodes.length; j++) if (j !== i) ds.push([dist(nodes[i], nodes[j]), j])
-      ds.sort(function (p, q) {
-        return p[0] - q[0]
-      })
-      for (j = 0; j < 3; j++) addEdge(i, ds[j][1])
-    }
-    for (i = 0; i < 40; i++) {
-      var a = Math.floor(rnd() * nodes.length),
-        b = Math.floor(rnd() * nodes.length)
-      if (dist(nodes[a], nodes[b]) < 0.95) addEdge(a, b)
-    }
-    var nodeCol = function () {
-      return [0.48 + (rnd() - 0.5) * 0.03, 0.9, 0.68]
-    }
-    var edgeCol = function (x, y, z, t) {
-      return [0.6 + t * 0.2, 0.8, 0.5]
-    }
-    var hazeCol = function () {
-      return [0.62, 0.7, 0.4]
-    }
-    var prims = []
-    nodes.forEach(function (p) {
-      prims.push(ell(p, [0.026, 0.026, 0.026], { col: nodeCol, boost: 1.4 }))
-    })
-    edges.forEach(function (e) {
-      prims.push(line(e[0], e[1], 0.022, { col: edgeCol }))
-    })
-    ;[-1, 1].forEach(function (sd) {
-      prims.push({
-        w: 0.55,
-        col: hazeCol,
+    var prims = [],
+      i
+    function hemi(sd) {
+      return {
+        w: 2.4,
+        spec: 0.38,
+        col: function (x, y, z, g) {
+          var m = clamp(g * 1.3, 0, 1),
+            v = 1 + (vnoise(x * 18, y * 18, z * 18) - 0.5) * 0.08
+          return [(0.88 - 0.42 * m) * v, (0.6 - 0.34 * m) * v, (0.6 - 0.32 * m) * v]
+        },
         s: function (out) {
           var u = unit(),
-            p = brainPt(u, sd)
-          out[0] = p[0]
-          out[1] = p[1]
-          out[2] = p[2]
-          out[3] = u[0]
-          out[4] = u[1]
-          out[5] = u[2]
-          out[6] = 0
+            p0 = brainField(u, sd),
+            b = basis(u),
+            e = 0.012
+          var p1 = brainField(
+            norm3([u[0] + b[0][0] * e, u[1] + b[0][1] * e, u[2] + b[0][2] * e]),
+            sd
+          )
+          var p2 = brainField(
+            norm3([u[0] + b[1][0] * e, u[1] + b[1][1] * e, u[2] + b[1][2] * e]),
+            sd
+          )
+          var n = cross(
+              [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]],
+              [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]]
+            ),
+            l = Math.hypot(n[0], n[1], n[2])
+          if (l < 1e-9 || p0[4]) n = [-sd, 0, 0]
+          else {
+            n = [n[0] / l, n[1] / l, n[2] / l]
+            if (n[0] * (p0[0] - sd * 0.2) + n[1] * (p0[1] - 1.2) + n[2] * p0[2] < 0)
+              n = [-n[0], -n[1], -n[2]]
+          }
+          out[0] = p0[0]
+          out[1] = p0[1]
+          out[2] = p0[2]
+          out[3] = n[0]
+          out[4] = n[1]
+          out[5] = n[2]
+          out[6] = p0[3]
         },
-      })
+      }
+    }
+    prims.push(hemi(-1), hemi(1))
+    prims.push({
+      w: 0.4,
+      spec: 0.2, // miyacha
+      col: function (x, y) {
+        var b = 0.5 + 0.5 * Math.sin(y * 140)
+        return [0.62 - 0.12 * b, 0.44 - 0.1 * b, 0.42 - 0.1 * b]
+      },
+      s: function (out) {
+        var q = unit(),
+          n = norm3([q[0] / 0.26, q[1] / 0.14, q[2] / 0.2]),
+          y = 0.86 + q[1] * 0.14,
+          rr = 1 + 0.03 * Math.sin(y * 110)
+        out[0] = q[0] * 0.26 * rr
+        out[1] = y
+        out[2] = -0.4 + q[2] * 0.2 * rr
+        out[3] = n[0]
+        out[4] = n[1]
+        out[5] = n[2]
+        out[6] = 0
+      },
     })
-    prims.push(tube([0, 0.9, -0.18], [0, 0.4, -0.12], 0.07, 0.05, { col: hazeCol, boost: 2 }))
-    var dc = Math.round(N * 0.1),
+    prims.push(
+      tube([0, 0.93, -0.15], [0, 0.55, -0.28], 0.065, 0.045, {
+        col: function () {
+          return [0.82, 0.74, 0.66]
+        },
+        spec: 0.25,
+        boost: 1.5,
+      })
+    )
+    // Yuzadagi nerv impulslari
+    var paths = [],
+      k,
+      m
+    for (k = 0; k < 40; k++) {
+      var sd = rnd() < 0.5 ? -1 : 1,
+        u0 = unit(),
+        u1 = norm3([
+          u0[0] + 0.9 * (rnd() - 0.5) * 2,
+          u0[1] + 0.9 * (rnd() - 0.5) * 2,
+          u0[2] + 0.9 * (rnd() - 0.5) * 2,
+        ])
+      var om = Math.acos(clamp(u0[0] * u1[0] + u0[1] * u1[1] + u0[2] * u1[2], -0.99, 0.99)),
+        so = Math.sin(om),
+        arr = new Float32Array(33 * 3)
+      for (m = 0; m < 33; m++) {
+        var t = m / 32,
+          k1 = Math.sin((1 - t) * om) / so,
+          k2 = Math.sin(t * om) / so,
+          p = brainField(
+            norm3([u0[0] * k1 + u1[0] * k2, u0[1] * k1 + u1[1] * k2, u0[2] * k1 + u1[2] * k2]),
+            sd
+          )
+        arr[m * 3] = p[0] + (p[0] - sd * 0.2) * 0.035
+        arr[m * 3 + 1] = p[1] + (p[1] - 1.2) * 0.035
+        arr[m * 3 + 2] = p[2] + p[2] * 0.035
+      }
+      paths.push(arr)
+    }
+    var dc = Math.round(N * 0.06),
       dst = N - dc,
-      ei = [],
+      pi = [],
       sp = [],
-      so = []
+      so2 = []
     for (i = 0; i < dc; i++) {
-      ei.push(edges[Math.floor(rnd() * edges.length)])
-      sp.push(0.25 + rnd() * 0.55)
-      so.push(rnd())
+      pi.push(Math.floor(rnd() * paths.length))
+      sp.push(0.25 + rnd() * 0.5)
+      so2.push(rnd())
     }
     var sh = buildShape(prims, N, dst)
+    sh.spin = 0.35
     sh.dyn = function (i, t) {
       var k = i - dst,
-        u = fract(t * sp[k] + so[k]),
-        e = ei[k],
-        j = i * 3
-      sh.pos[j] = e[0][0] + (e[1][0] - e[0][0]) * u
-      sh.pos[j + 1] = e[0][1] + (e[1][1] - e[0][1]) * u
-      sh.pos[j + 2] = e[0][2] + (e[1][2] - e[0][2]) * u
-      hsl(0.93, 0.8, 0.55 + 0.3 * Math.sin(u * Math.PI), sh.col, j)
+        u = fract(t * sp[k] + so2[k]),
+        f = u * 31.999,
+        m = Math.floor(f),
+        w = f - m,
+        a = paths[pi[k]],
+        j = i * 3,
+        lum = Math.sin(u * Math.PI)
+      sh.pos[j] = a[m * 3] + (a[m * 3 + 3] - a[m * 3]) * w
+      sh.pos[j + 1] = a[m * 3 + 1] + (a[m * 3 + 4] - a[m * 3 + 1]) * w
+      sh.pos[j + 2] = a[m * 3 + 2] + (a[m * 3 + 5] - a[m * 3 + 2]) * w
+      sh.col[j] = (0.3 + 0.7 * lum) * lum
+      sh.col[j + 1] = (0.2 + 0.8 * lum) * lum
+      sh.col[j + 2] = lum
+      sh.mat[i * 2] = 0
+      sh.mat[i * 2 + 1] = 1
     }
     return sh
   }
 
-  /* ================================================================
-     4. DUNYO — nuqtali globus, aloqa yoylari, orbita va yo'ldosh
-     ================================================================ */
+  /* ================= 4. DUNYO — okean, qit'alar, muz, bulutlar, atmosfera, tungi shahar chiroqlari, Oy ================= */
   function buildGlobe(N) {
-    var R = 0.85,
-      M2 = Math.round(N * 1.2),
-      tilt = 0.41,
-      ct = Math.cos(tilt),
-      st = Math.sin(tilt),
-      CY = 1.02,
-      i
-    function ringFn(t) {
-      var a = t * TAU,
-        x = 1.22 * Math.cos(a),
-        z0 = 1.22 * Math.sin(a)
-      return [x, -z0 * Math.sin(0.5), z0 * Math.cos(0.5)]
+    var R = 0.55,
+      TL = 0.41,
+      CY = 1.0,
+      i,
+      prims = []
+    function ter(x, y, z) {
+      return fbm(x * 1.5 + 3.1, y * 1.5 + 1.7, z * 1.5 + 0.4)
     }
-    var cities = []
-    for (i = 0; i < 7; i++) cities.push(unit())
-    var pairs = [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [3, 4],
-      [4, 5],
-      [5, 6],
-      [0, 3],
-      [2, 5],
-    ]
-    function arcFn(a, b) {
-      var om = Math.acos(clamp(a[0] * b[0] + a[1] * b[1] + a[2] * b[2], -0.999, 0.999)),
-        so = Math.sin(om)
-      return function (t) {
-        var k1 = Math.sin((1 - t) * om) / so,
-          k2 = Math.sin(t * om) / so
-        var p = norm3([a[0] * k1 + b[0] * k2, a[1] * k1 + b[1] * k2, a[2] * k1 + b[2] * k2])
-        var h = R + 0.03 + 0.28 * Math.sin(Math.PI * t) * (om / 2)
-        return [p[0] * h, p[1] * h, p[2] * h]
+    var A = 4 * Math.PI * R * R
+    function surf(wantLand) {
+      return {
+        w: A * (wantLand ? 0.36 : 0.64),
+        spec: wantLand ? 0.05 : 0.7,
+        col: function (x, y, z, h) {
+          var lat = Math.abs(y / R),
+            v = 0.94 + (vnoise(x * 50, y * 50, z * 50) - 0.5) * 0.1
+          if (lat > 0.9) return [0.93 * v, 0.95 * v, 0.98 * v] // muz
+          if (h > 0.53) {
+            var e = clamp((h - 0.53) / 0.22, 0, 1),
+              dry =
+                clamp(1 - Math.abs(lat - 0.3) * 4, 0, 1) *
+                clamp((fbm(x * 6, y * 6, z * 6) - 0.35) * 4, 0, 1)
+            var c = [0.16 + 0.5 * dry, 0.4 + 0.16 * dry, 0.14 + 0.2 * dry] // o'rmon -> cho'l
+            if (e > 0.45) {
+              var m = (e - 0.45) / 0.4
+              c = [c[0] + (0.45 - c[0]) * m, c[1] + (0.4 - c[1]) * m, c[2] + (0.34 - c[2]) * m]
+            }
+            if (e > 0.85) c = [0.95, 0.95, 0.97]
+            return [c[0] * v, c[1] * v, c[2] * v]
+          }
+          var d = clamp((0.53 - h) / 0.2, 0, 1) // okean chuqurligi
+          return [(0.06 - 0.05 * d) * v, (0.32 - 0.25 * d) * v, (0.5 - 0.25 * d) * v]
+        },
+        s: function (out) {
+          var u, h, ok
+          do {
+            u = unit()
+            h = ter(u[0], u[1], u[2])
+            var land = h > 0.53 || Math.abs(u[1]) > 0.9
+            ok = wantLand ? land : !land
+          } while (!ok)
+          out[0] = u[0] * R
+          out[1] = u[1] * R
+          out[2] = u[2] * R
+          out[3] = u[0]
+          out[4] = u[1]
+          out[5] = u[2]
+          out[6] = h
+        },
       }
     }
-    var arcs = pairs.map(function (p) {
-      return arcFn(cities[p[0]], cities[p[1]])
-    })
-    var prims = []
+    prims.push(surf(true), surf(false))
     prims.push({
-      w: 10,
+      w: A * 0.55 * 1.05,
+      spec: 0.04,
       col: function (x, y, z, t) {
-        if (Math.abs(y) > R * 0.88) return [0.55, 0.2, 0.85]
-        return t > 0.5 ? [0.38 + (rnd() - 0.5) * 0.04, 0.75, 0.56] : [0.6, 0.8, 0.34]
-      },
+        var v = 0.88 + 0.12 * t
+        return [v, v, v + 0.02]
+      }, // bulutlar
       s: function (out) {
-        var px, py, pz, land
+        var u, c
         do {
-          var j = Math.floor(rnd() * M2),
-            yy = 1 - (2 * (j + 0.5)) / M2,
-            rr = Math.sqrt(1 - yy * yy),
-            ph = j * 2.39996323
-          px = rr * Math.cos(ph)
-          py = yy
-          pz = rr * Math.sin(ph)
-          land = fbm(px * 1.5 + 3.1, py * 1.5 + 1.7, pz * 1.5 + 0.4) > 0.53
-        } while (!land && rnd() < 0.62)
-        out[0] = px * R
-        out[1] = py * R
-        out[2] = pz * R
-        out[3] = px
-        out[4] = py
-        out[5] = pz
-        out[6] = land ? 1 : 0
+          u = unit()
+          c = fbm(u[0] * 2.6 + 9.2, u[1] * 3.2 + 4.4, u[2] * 2.6 + 1.3)
+        } while (c < 0.54)
+        var rr = R * (1.022 + 0.03 * (c - 0.54) * 3)
+        out[0] = u[0] * rr
+        out[1] = u[1] * rr
+        out[2] = u[2] * rr
+        out[3] = u[0]
+        out[4] = u[1]
+        out[5] = u[2]
+        out[6] = clamp((c - 0.54) * 4, 0, 1)
       },
     })
     prims.push({
-      w: 0.8,
+      w: A * 0.14,
+      em: 3,
       col: function () {
-        return [0.58, 0.7, 0.4]
-      },
+        return [0.32, 0.58, 1.0]
+      }, // atmosfera
       s: function (out) {
-        var u = unit()
-        out[0] = u[0] * R * 1.08
-        out[1] = u[1] * R * 1.08
-        out[2] = u[2] * R * 1.08
+        var u = unit(),
+          rr = R * 1.09
+        out[0] = u[0] * rr
+        out[1] = u[1] * rr
+        out[2] = u[2] * rr
         out[3] = u[0]
         out[4] = u[1]
         out[5] = u[2]
         out[6] = 0
       },
     })
-    prims.push(
-      curve(ringFn, 90, 0.005, {
-        col: function () {
-          return [0.55, 0.5, 0.7]
-        },
-        boost: 1.6,
-      })
-    )
-    arcs.forEach(function (f) {
-      prims.push(
-        curve(f, 48, 0.006, {
-          col: function (x, y, z, t) {
-            return [0.92 - 0.42 * t, 0.85, 0.62]
-          },
-          boost: 1.2,
-        })
-      )
+    prims.push({
+      w: A * 0.03,
+      em: 2,
+      col: function () {
+        return [1, 0.78, 0.42]
+      }, // tungi shahar chiroqlari
+      s: function (out) {
+        var u, h
+        do {
+          u = unit()
+          h = ter(u[0], u[1], u[2])
+        } while (
+          h < 0.56 ||
+          h > 0.7 ||
+          fbm(u[0] * 9 + 2, u[1] * 9, u[2] * 9) < 0.56 ||
+          Math.abs(u[1]) > 0.8
+        )
+        out[0] = u[0] * R * 1.004
+        out[1] = u[1] * R * 1.004
+        out[2] = u[2] * R * 1.004
+        out[3] = u[0]
+        out[4] = u[1]
+        out[5] = u[2]
+        out[6] = 0
+      },
     })
-    cities.forEach(function (c) {
-      prims.push(
-        ell([c[0] * R * 1.01, c[1] * R * 1.01, c[2] * R * 1.01], [0.024, 0.024, 0.024], {
-          col: function () {
-            return [0.1, 0.9, 0.62]
-          },
-          boost: 1.4,
-        })
-      )
-    })
-
-    var d1 = Math.round(N * 0.07),
-      d2 = Math.round(N * 0.03),
-      dst = N - d1 - d2,
-      ai = [],
-      sp = [],
-      so = [],
-      off = []
-    for (i = 0; i < d1; i++) {
-      ai.push(Math.floor(rnd() * arcs.length))
-      sp.push(0.12 + rnd() * 0.25)
-      so.push(rnd())
+    // Oy (dinamik): orbitada, Yer aylanishini inobatga olib joylashtiriladi
+    var dm = Math.round(N * 0.06),
+      dst = N - dm,
+      mu = [],
+      mcol = [],
+      RM = 0.075,
+      ORB = 0.95
+    var ct = Math.cos(TL),
+      st = Math.sin(TL),
+      cT = -1,
+      mc = [0, 0, 0]
+    for (i = 0; i < dm; i++) {
+      var q = unit(),
+        cr = fbm(q[0] * 9, q[1] * 9, q[2] * 9),
+        v = (0.55 + 0.35 * fbm(q[0] * 5, q[1] * 5, q[2] * 5)) * (cr > 0.62 ? 0.7 : 1)
+      mu.push(q)
+      mcol.push(v)
     }
-    for (i = 0; i < d2; i++) off.push(unit())
     var sh = buildShape(prims, N, dst)
-    function xf(x, y, z, arr, j) {
-      arr[j] = x * ct - y * st
-      arr[j + 1] = x * st + y * ct + CY
-      arr[j + 2] = z
+    for (i = 0; i < dm; i++) {
+      var j0 = (dst + i) * 3
+      sh.col[j0] = mcol[i]
+      sh.col[j0 + 1] = mcol[i] * 0.98
+      sh.col[j0 + 2] = mcol[i] * 0.94
+      sh.mat[(dst + i) * 2] = 0.04
     }
-    for (i = 0; i < dst; i++) {
-      var j0 = i * 3
-      xf(sh.pos[j0], sh.pos[j0 + 1], sh.pos[j0 + 2], sh.pos, j0)
+    sh.tilt = TL
+    sh.cy = CY
+    sh.spin = 0.22
+    function inv(x, y, z, a, out, o) {
+      var xl = x * ct + y * st,
+        yl = -x * st + y * ct,
+        ca = Math.cos(a),
+        sa = Math.sin(a)
+      out[o] = xl * ca - z * sa
+      out[o + 1] = yl
+      out[o + 2] = xl * sa + z * ca
     }
     sh.dyn = function (i, t) {
-      var j = i * 3,
-        k = i - dst,
-        p
-      if (k < d1) {
-        var u = fract(t * sp[k] + so[k])
-        p = arcs[ai[k]](u)
-        xf(p[0], p[1], p[2], sh.pos, j)
-        hsl(0.12, 0.6, 0.6 + 0.25 * Math.sin(u * Math.PI), sh.col, j)
-      } else {
-        var m = k - d1
-        p = ringFn(fract(t * 0.06))
-        var o = off[m]
-        xf(p[0] + o[0] * 0.045, p[1] + o[1] * 0.045, p[2] + o[2] * 0.045, sh.pos, j)
-        hsl(0.52, 0.5, 0.8, sh.col, j)
+      var k = i - dst,
+        j = i * 3,
+        a = sh.curA,
+        o = mu[k]
+      if (cT !== t) {
+        cT = t
+        var om = t * 0.16 + 1
+        mc[0] = Math.cos(om) * ORB
+        mc[1] = Math.sin(om) * ORB * 0.09
+        mc[2] = Math.sin(om) * ORB
       }
+      inv(mc[0] + o[0] * RM, mc[1] + o[1] * RM, mc[2] + o[2] * RM, a, sh.pos, j)
+      inv(o[0], o[1], o[2], a, sh.nrm, j)
     }
     return sh
   }
 
-  /* ================================================================
-     5. RAKETA — jonli olov bilan
-     ================================================================ */
+  /* ================= 5. RAKETA — oq korpus, panel chiziqlari, to'r qanotlar, oyoqlar, jonli olov va tutun ================= */
   function buildRocket(N) {
     var prims = [],
-      i
-    var bodyCol = function (x, y) {
-      if (y > 0.93 && y < 1.01) return [0.0, 0.85, 0.6]
-      if (y > 1.5) return [0.98, 0.8, 0.62]
-      return [0.56, 0.25, 0.78]
+      i,
+      k,
+      R = 0.105
+    function bodyCol(x, y, z) {
+      if (y > 1.5 && y < 1.6) return [0.04, 0.04, 0.045] // qora oraliq bo'lim
+      if (Math.abs(fract(y / 0.19) - 0.5) > 0.45) return [0.5, 0.51, 0.53] // payvand chiziqlari
+      var soot = y < 1.0 ? clamp((1.0 - y) / 0.25, 0, 1) * 0.7 : 0,
+        v = 0.92 - soot * 0.8 + (vnoise(x * 40, y * 40, z * 40) - 0.5) * 0.05
+      return [v, v, v + 0.01]
     }
-    var red = function () {
-      return [0.98, 0.8, 0.6]
+    var sec = [
+      [0.76, R, R],
+      [1.84, R * 0.99, R * 0.99],
+    ]
+    for (i = 1; i <= 14; i++) {
+      var u = i / 14
+      sec.push([
+        1.84 + u * 0.4,
+        R * 0.99 * Math.pow(Math.max(1 - Math.pow(u, 2.2), 0), 0.7),
+        R * 0.99 * Math.pow(Math.max(1 - Math.pow(u, 2.2), 0), 0.7),
+      ])
     }
-    var cyan = function () {
-      return [0.52, 0.9, 0.7]
-    }
-    var amber = function () {
-      return [0.12, 0.95, 0.62]
+    prims.push(loft(sec, { col: bodyCol, spec: 0.35, boost: 1.3 }))
+    var DK = function () {
+      return [0.1, 0.1, 0.12]
     }
     prims.push(
-      loft(
-        [
-          [0.6, 0.19, 0.19],
-          [0.66, 0.215, 0.215],
-          [0.95, 0.235, 0.235],
-          [1.3, 0.235, 0.235],
-          [1.5, 0.205, 0.205],
-          [1.68, 0.15, 0.15],
-          [1.84, 0.085, 0.085],
-          [1.96, 0.03, 0.03],
-          [2.0, 0.001, 0.001],
-        ],
-        { col: bodyCol }
-      )
+      tube([0, 0.76, 0], [0, 0.7, 0], R * 0.92, R * 0.92, { noCap: true, col: DK, spec: 0.5 })
     )
-    prims.push(ringY(0.975, 0.238, 0.012, { col: amber, boost: 1.4 }))
-    prims.push(ringY(1.52, 0.2, 0.01, { col: amber }))
-    prims.push(ringY(0.64, 0.21, 0.01, { col: amber }))
-    prims.push(disc([0, 1.3, 0.2355], 0.075, { col: cyan, boost: 1.6 }))
-    prims.push(ringZ([0, 1.3, 0.236], 0.09, 0.012, { col: amber, boost: 1.4 }))
-    for (var k = 0; k < 3; k++) {
+    prims.push(ringY(0.76, R, 0.006, { col: DK, spec: 0.4 }))
+    for (k = 0; k < 3; k++) {
+      // dvigatel soplolari
       var a = (k * TAU) / 3,
-        ca = Math.cos(a),
-        sa = Math.sin(a)
-      var P = function (r, y) {
-        return [r * sa, y, r * ca]
-      }
-      prims.push(tri(P(0.22, 0.98), P(0.48, 0.6), P(0.58, 0.36), 0.012, { col: red }))
-      prims.push(tri(P(0.22, 0.98), P(0.58, 0.36), P(0.22, 0.58), 0.012, { col: red }))
+        nx = 0.055 * Math.cos(a),
+        nz = 0.055 * Math.sin(a)
+      prims.push(
+        tube([nx, 0.74, nz], [nx, 0.66, nz], 0.022, 0.044, {
+          noCap: true,
+          col: function () {
+            return [0.48, 0.3, 0.2]
+          },
+          spec: 0.7,
+          boost: 2,
+        })
+      )
     }
-    prims.push(
-      tube([0, 0.6, 0], [0, 0.46, 0], 0.13, 0.17, {
-        noCap: true,
-        col: function () {
-          return [0.08, 0.3, 0.5]
-        },
-      })
-    )
-    prims.push(ringY(0.46, 0.17, 0.01, { col: amber, boost: 1.5 }))
-    var dc = Math.round(N * 0.22),
+    for (k = 0; k < 4; k++) {
+      // to'rsimon boshqaruv qanotlari
+      var an = (k * Math.PI) / 2,
+        ca = Math.cos(an),
+        sa = Math.sin(an),
+        cx = (R + 0.03) * ca,
+        cz = (R + 0.03) * sa
+      prims.push(
+        cub([cx, 1.46, cz], k % 2 === 0 ? [0.03, 0.034, 0.004] : [0.004, 0.034, 0.03], {
+          col: function () {
+            return [0.2, 0.2, 0.22]
+          },
+          spec: 0.5,
+          boost: 2,
+        })
+      )
+    }
+    for (k = 0; k < 4; k++) {
+      // qo'nish oyoqlari
+      var an2 = (k * Math.PI) / 2 + Math.PI / 4,
+        c2 = Math.cos(an2),
+        s2 = Math.sin(an2)
+      prims.push(
+        tube([R * c2, 1.2, R * s2], [(R + 0.2) * c2, 0.62, (R + 0.2) * s2], 0.012, 0.008, {
+          col: function () {
+            return [0.1, 0.1, 0.12]
+          },
+          spec: 0.4,
+          boost: 2,
+        })
+      )
+      prims.push(
+        ell([(R + 0.2) * c2, 0.615, (R + 0.2) * s2], [0.04, 0.008, 0.04], {
+          col: function () {
+            return [0.14, 0.14, 0.16]
+          },
+          spec: 0.4,
+        })
+      )
+    }
+    var dc = Math.round(N * 0.2),
       dst = N - dc,
+      na = [],
       sa2 = [],
       sr = [],
       sp = [],
       so = []
     for (i = 0; i < dc; i++) {
+      na.push(Math.floor(rnd() * 3))
       sa2.push(rnd() * TAU)
       sr.push(Math.sqrt(rnd()))
-      sp.push(1.4 + rnd() * 1.2)
+      sp.push(1.6 + rnd() * 1.4)
       so.push(rnd())
     }
     var sh = buildShape(prims, N, dst)
     sh.dyn = function (i, t) {
       var k = i - dst,
         u = fract(t * sp[k] + so[k]),
-        j = i * 3
-      var rr = 0.15 * (1 - u * 0.8) * sr[k],
-        fl = Math.sin(t * 25 + k) * 0.01
-      sh.pos[j] = Math.cos(sa2[k]) * rr + fl
-      sh.pos[j + 1] = 0.45 - u * 0.44
-      sh.pos[j + 2] = Math.sin(sa2[k]) * rr + fl
-      hsl(0.14 * (1 - u) + 0.0, 0.95, 0.88 - 0.38 * u, sh.col, j)
+        j = i * 3,
+        ang = (na[k] * TAU) / 3
+      var spread = (0.035 + 0.06 * u + (u > 0.75 ? (u - 0.75) * 0.4 : 0)) * sr[k],
+        fl = Math.sin(t * 40 + k) * 0.008 * u
+      sh.pos[j] = 0.055 * Math.cos(ang) + Math.cos(sa2[k]) * spread + fl
+      sh.pos[j + 1] = 0.66 - u * 0.64
+      sh.pos[j + 2] = 0.055 * Math.sin(ang) + Math.sin(sa2[k]) * spread + fl
+      var c,
+        f = 1 - u * 0.5
+      if (u < 0.12) c = [0.85, 0.9, 1]
+      else if (u < 0.45) {
+        var m = (u - 0.12) / 0.33
+        c = [1, 0.95 - 0.17 * m, 0.7 - 0.45 * m]
+      } else if (u < 0.75) {
+        var m2 = (u - 0.45) / 0.3
+        c = [1, 0.78 - 0.43 * m2, 0.25 - 0.17 * m2]
+      } else c = [0.26, 0.26, 0.28]
+      var fl2 = u < 0.75
+      sh.col[j] = c[0] * (fl2 ? f : 1)
+      sh.col[j + 1] = c[1] * (fl2 ? f : 1)
+      sh.col[j + 2] = c[2] * (fl2 ? f : 1)
+      sh.nrm[j] = 0
+      sh.nrm[j + 1] = 1
+      sh.nrm[j + 2] = 0
+      sh.mat[i * 2] = 0
+      sh.mat[i * 2 + 1] = fl2 ? 1 : 0
     }
     return sh
   }
 
-  /* ================================================================
-     6. DIZAYN — bezye egri chizig'i, langarlar, qalam
-     ================================================================ */
+  /* ================= 6. DIZAYN — mol'bert, qog'oz, siyoh Bezye, qalam ================= */
   function buildDesign(N) {
     var P0 = [-0.9, 0.5],
       C1 = [-0.4, 0.5],
@@ -979,30 +1377,86 @@
       P1 = [0, 1.1],
       C1b = [0.5, 0.75],
       C2b = [0.4, 1.7],
-      P2 = [0.9, 1.65]
+      P2 = [0.9, 1.65],
+      Z = 0.012
     function bez(a, b, c, d, t) {
       var u = 1 - t
       return [
         u * u * u * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t * t * t * d[0],
         u * u * u * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t * t * t * d[1],
-        0,
+        Z,
       ]
     }
-    function path(t) {
-      return t < 0.5 ? bez(P0, C1, C2, P1, t * 2) : bez(P1, C1b, C2b, P2, (t - 0.5) * 2)
+    var prims = [],
+      WOOD = function (x, y, z) {
+        var v = 1 + Math.sin(y * 90 + vnoise(x * 5, y * 5, z * 5) * 6) * 0.07
+        return [0.55 * v, 0.36 * v, 0.2 * v]
+      }
+    var W = { col: WOOD, spec: 0.2, boost: 1.2 }
+    prims.push(
+      tube([-0.95, 0, -0.45], [-0.9, 1.95, -0.07], 0.03, 0.03, W),
+      tube([0.95, 0, -0.45], [0.9, 1.95, -0.07], 0.03, 0.03, W),
+      tube([0, 0, -0.9], [0, 1.75, -0.1], 0.03, 0.03, W)
+    )
+    prims.push(cub([0, 0.335, 0.06], [1.2, 0.02, 0.1], W))
+    prims.push(
+      cub([0, 1.1, -0.02], [1.1, 0.75, 0.02], {
+        col: function (x, y, z) {
+          var v = 0.93 + (fbm(x * 90, y * 90, z * 90) - 0.5) * 0.08
+          return [v, v * 0.98, v * 0.93]
+        },
+        spec: 0.05,
+        boost: 1.4,
+      })
+    ) // qog'oz
+    prims.push({
+      w: 0.3,
+      col: function () {
+        return [0.72, 0.7, 0.66]
+      }, // nuqtali to'r
+      s: function (out) {
+        out[0] = -1.0 + Math.floor(rnd() * 21) * 0.1
+        out[1] = 0.45 + Math.floor(rnd() * 14) * 0.1
+        out[2] = 0.004
+        out[3] = 0
+        out[4] = 0
+        out[5] = 1
+        out[6] = 0
+      },
+    })
+    ;[
+      [0.9, 0.2, 0.2],
+      [0.95, 0.65, 0.1],
+      [0.2, 0.7, 0.35],
+      [0.2, 0.5, 0.95],
+      [0.55, 0.3, 0.85],
+    ].forEach(function (c, k) {
+      prims.push(
+        disc([-0.9 + k * 0.14, 1.7, 0.004], 0.05, {
+          col: function () {
+            return c
+          },
+          spec: 0.3,
+          boost: 1.3,
+        })
+      )
+    })
+    var ink = function (x, y, z, t) {
+      return [0.1 + 0.7 * t, 0.12, 0.3 - 0.1 * t]
     }
-    var prims = []
     prims.push(
       curve(
         function (t) {
           return bez(P0, C1, C2, P1, t)
         },
         70,
-        0.03,
+        0.011,
         {
           col: function (x, y, z, t) {
-            return [0.9 - 0.2 * t, 0.85, 0.62]
+            return ink(x, y, z, t * 0.5)
           },
+          spec: 0.5,
+          boost: 1.5,
         }
       )
     )
@@ -1012,19 +1466,18 @@
           return bez(P1, C1b, C2b, P2, t)
         },
         70,
-        0.03,
+        0.011,
         {
           col: function (x, y, z, t) {
-            return [0.7 - 0.2 * t, 0.85, 0.62]
+            return ink(x, y, z, 0.5 + t * 0.5)
           },
+          spec: 0.5,
+          boost: 1.5,
         }
       )
     )
-    var hcol = function () {
-      return [0.58, 0.3, 0.62]
-    }
-    var hdot = function () {
-      return [0.12, 0.95, 0.62]
+    var BL = function () {
+      return [0.2, 0.55, 1]
     }
     ;[
       [P0, C1],
@@ -1032,126 +1485,89 @@
       [P1, C1b],
       [P2, C2b],
     ].forEach(function (p) {
-      prims.push(line([p[0][0], p[0][1], 0], [p[1][0], p[1][1], 0], 0.025, { col: hcol }))
-      prims.push(ell([p[1][0], p[1][1], 0], [0.03, 0.03, 0.03], { col: hdot, boost: 1.4 }))
-    })
-    var acol = function () {
-      return [0.52, 0.9, 0.72]
-    }
-    ;[P0, P2].forEach(function (p) {
-      // ichi bo'sh kvadrat langarlar
-      var h = 0.06,
-        c = [p[0], p[1], 0],
-        sgn = [-1, 1],
-        x,
-        y,
-        z
-      sgn.forEach(function (sy) {
-        sgn.forEach(function (sz2) {
-          prims.push(
-            tube(
-              [c[0] - h, c[1] + sy * h, sz2 * h],
-              [c[0] + h, c[1] + sy * h, sz2 * h],
-              0.007,
-              0.007,
-              { col: acol }
-            )
-          )
-          prims.push(
-            tube(
-              [c[0] + sy * h, c[1] - h, sz2 * h],
-              [c[0] + sy * h, c[1] + h, sz2 * h],
-              0.007,
-              0.007,
-              { col: acol }
-            )
-          )
-          prims.push(
-            tube(
-              [c[0] + sy * h, c[1] + sz2 * h, -h],
-              [c[0] + sy * h, c[1] + sz2 * h, h],
-              0.007,
-              0.007,
-              { col: acol }
-            )
-          )
+      prims.push(
+        line([p[0][0], p[0][1], Z + 0.003], [p[1][0], p[1][1], Z + 0.003], 0.02, {
+          col: BL,
+          em: 1,
+          jit: 0.003,
+          nrm: [0, 0, 1],
+          boost: 1.5,
         })
-      })
+      )
+      prims.push(
+        ell([p[1][0], p[1][1], Z + 0.005], [0.02, 0.02, 0.008], { col: BL, em: 1, boost: 2 })
+      )
+    })
+    ;[P0, P2].forEach(function (p) {
+      prims.push(
+        cub([p[0], p[1], Z + 0.004], [0.032, 0.032, 0.006], {
+          col: function () {
+            return [0.95, 0.95, 0.97]
+          },
+          spec: 0.4,
+          boost: 1.6,
+        })
+      )
     })
     prims.push(
-      box([P1[0], P1[1], 0], 0.06, {
-        col: function () {
-          return [0.52, 0.9, 0.78]
-        },
-        boost: 1.2,
-      })
-    ) // tanlangan langar
-    // qalam
-    var T = [0.9, 1.65, 0],
-      d = norm3([0.55, 0.84, 0])
+      cub([P1[0], P1[1], Z + 0.004], [0.032, 0.032, 0.006], { col: BL, em: 1, boost: 1.6 })
+    )
+    // Real qalam
+    var T = [0.9, 1.65, Z],
+      d = norm3([0.55, 0.45, 0.7])
     function at(s) {
-      return [T[0] + d[0] * s, T[1] + d[1] * s, 0]
+      return [T[0] + d[0] * s, T[1] + d[1] * s, T[2] + d[2] * s]
     }
     prims.push(
-      tube(T, at(0.28), 0.004, 0.075, {
+      tube(T, at(0.025), 0.002, 0.007, {
+        col: function () {
+          return [0.18, 0.18, 0.2]
+        },
+        spec: 0.5,
+        boost: 2,
+      })
+    )
+    prims.push(
+      tube(at(0.025), at(0.105), 0.007, 0.018, {
         noCap: true,
         col: function () {
-          return [0.12, 0.2, 0.85]
+          return [0.84, 0.66, 0.45]
         },
+        spec: 0.1,
+        boost: 1.6,
       })
     )
     prims.push(
-      tube(at(0.28), at(0.52), 0.075, 0.075, {
-        col: function () {
-          return [0.76, 0.8, 0.55]
-        },
-      })
-    )
-    prims.push(
-      tube(at(0.28), at(0.31), 0.082, 0.082, {
-        col: function () {
-          return [0.12, 0.95, 0.62]
-        },
+      hex(at(0.105), at(0.5), 0.018, {
+        spec: 0.45,
         boost: 1.4,
+        col: function (x, y, z, t) {
+          var f = Math.floor(t) % 2,
+            v = f ? 0.9 : 1
+          return [0.98 * v, 0.78 * v, 0.1 * v]
+        },
       })
     )
-    // Figma kabi nuqtali tur
-    prims.push({
-      w: 0.5,
-      col: function () {
-        return [0.62, 0.5, 0.3]
-      },
-      s: function (out) {
-        out[0] = -1.2 + Math.floor(rnd() * 26) * 0.1
-        out[1] = 0.3 + Math.floor(rnd() * 19) * 0.1
-        out[2] = -0.12
-        out[3] = 0
-        out[4] = 0
-        out[5] = 1
-        out[6] = 0
-      },
-    })
-    var dc = Math.round(N * 0.06),
-      dst = N - dc,
-      sp = [],
-      so = [],
-      i
-    for (i = 0; i < dc; i++) {
-      sp.push(0.1 + rnd() * 0.1)
-      so.push(rnd())
-    }
-    var sh = buildShape(prims, N, dst)
+    prims.push(
+      tube(at(0.5), at(0.555), 0.0195, 0.0195, {
+        spec: 0.85,
+        boost: 1.4,
+        col: function (x, y, z, t) {
+          return fract(t * 6) > 0.8 ? [0.45, 0.46, 0.5] : [0.74, 0.75, 0.78]
+        },
+      })
+    )
+    prims.push(
+      tube(at(0.555), at(0.61), 0.016, 0.016, {
+        spec: 0.1,
+        boost: 1.4,
+        col: function () {
+          return [0.9, 0.45, 0.5]
+        },
+      })
+    )
+    var sh = buildShape(prims, N, N)
     sh.mode = 'sway'
-    sh.dyn = function (i, t) {
-      var k = i - dst,
-        u = fract(t * sp[k] + so[k]),
-        p = path(u),
-        j = i * 3
-      sh.pos[j] = p[0] + (rnd() - 0.5) * 0.03
-      sh.pos[j + 1] = p[1] + (rnd() - 0.5) * 0.03
-      sh.pos[j + 2] = (rnd() - 0.5) * 0.05
-      hsl(0.1, 0.4, 0.85, sh.col, j)
-    }
     return sh
   }
 
@@ -1164,22 +1580,21 @@
     { id: 'dizayn', label: 'Dizayn', build: buildDesign },
   ]
 
-  /* ================================================================
-     Yurish animatsiyasi (faqat odam shakli uchun)
-     ================================================================ */
+  /* ================= Yurish animatsiyasi (normallar ham aylanadi) ================= */
   var ang = new Float32Array(8),
     cs = new Float32Array(8),
     sn = new Float32Array(8)
-  function animateHuman(sh, target, N, t, move, run, ph) {
-    var H = sh.human,
-      rest = sh.pos
-    var amp = (run ? 1.0 : 0.65) * move
+  function animateHuman(sh, tp, tn, N, t, move, run, ph) {
+    var HB = sh.human,
+      rest = sh.pos,
+      rn = sh.nrm,
+      amp = (run ? 1.0 : 0.65) * move
     var hipL = Math.sin(ph) * 0.75 * amp,
       hipR = -hipL
     var kneeL = -Math.max(0, Math.cos(ph)) * amp - 0.04,
       kneeR = -Math.max(0, -Math.cos(ph)) * amp - 0.04
-    var breath = Math.sin(t * 1.8) * 0.03 * (1 - Math.min(move, 1))
-    var elb = 0.22 + 0.55 * amp
+    var breath = Math.sin(t * 1.8) * 0.03 * (1 - Math.min(move, 1)),
+      elb = 0.22 + 0.55 * amp
     ang[0] = -hipL * 0.8 + breath
     ang[1] = -hipR * 0.8 - breath
     ang[2] = elb
@@ -1194,67 +1609,91 @@
     }
     for (var i = 0; i < N; i++) {
       var i3 = i * 3,
-        ty = H.type[i],
+        ty = HB.type[i],
         x = rest[i3],
         y = rest[i3 + 1],
-        z = rest[i3 + 2]
+        z = rest[i3 + 2],
+        nx = rn[i3],
+        ny = rn[i3 + 1],
+        nz = rn[i3 + 2],
+        q
       if (ty !== 0) {
-        var s = H.side[i] < 0 ? 0 : 1,
-          y1 = H.y1[i],
-          z1 = H.z1[i]
+        var s = HB.side[i] < 0 ? 0 : 1,
+          y1 = HB.y1[i],
+          z1 = HB.z1[i]
         if (ty === 2 || ty === 4) {
           var ai = (ty === 2 ? 2 : 6) + s,
-            y2 = H.y2[i],
-            z2 = H.z2[i],
+            y2 = HB.y2[i],
+            z2 = HB.z2[i],
             dy = y - y2,
             dz = z - z2
           y = dy * cs[ai] + dz * sn[ai] + y2
           z = -dy * sn[ai] + dz * cs[ai] + z2
+          q = ny * cs[ai] + nz * sn[ai]
+          nz = -ny * sn[ai] + nz * cs[ai]
+          ny = q
         }
         var aj = (ty <= 2 ? 0 : 4) + s,
           ey = y - y1,
           ez = z - z1
         y = ey * cs[aj] + ez * sn[aj] + y1
         z = -ey * sn[aj] + ez * cs[aj] + z1
+        q = ny * cs[aj] + nz * sn[aj]
+        nz = -ny * sn[aj] + nz * cs[aj]
+        ny = q
       }
-      target[i3] = x
-      target[i3 + 1] = y
-      target[i3 + 2] = z
+      tp[i3] = x
+      tp[i3 + 1] = y
+      tp[i3 + 2] = z
+      tn[i3] = nx
+      tn[i3 + 1] = ny
+      tn[i3 + 2] = nz
     }
   }
 
-  /* ================================================================
-     Shaderlar
-     ================================================================ */
+  /* ================= Shaderlar: real vaqtli yoritish ================= */
   var VERT = [
-    'attribute vec3 aColor; attribute float aSeed;',
-    'uniform float uTime, uScale, uSize, uGlow, uScan, uMorph, uMono, uLight;',
-    'varying vec3 vColor; varying float vA;',
+    'attribute vec3 aColor; attribute vec3 aNormal; attribute vec2 aMat; attribute float aSeed;',
+    'uniform float uTime,uScale,uSize,uMorph,uMono,uLight,uPass; uniform vec3 uLightDir;',
+    'varying vec3 vColor;',
     'void main(){',
-    '  vec4 mv = modelViewMatrix * vec4(position, 1.0);',
-    '  float tw = 0.8 + 0.2 * sin(uTime * (1.2 + aSeed * 2.5) + aSeed * 60.0);',
-    '  float scan = exp(-pow((position.y - uScan) * 7.0, 2.0));',
-    '  float sz = uSize * (0.7 + 0.6 * aSeed) * (1.0 + scan * 0.7 + uMorph * 0.7);',
-    '  gl_PointSize = clamp(sz * uScale / (-mv.z), 1.0, 48.0);',
-    '  vec3 c = aColor * tw + scan * vec3(0.3, 0.55, 0.65);',
-    '  float lum = dot(c, vec3(0.299, 0.587, 0.114));',
-    '  float a = mix(0.8, 0.07, uGlow);',
-    '  if (uMono > 0.5) {',
-    '    if (uLight > 0.5) { c = vec3(0.04); a *= clamp(lum * 1.5 + 0.2, 0.0, 1.0) * 1.15; }',
-    '    else { c = vec3(min(lum * 1.35, 1.0)); }',
+    '  vec4 mv=modelViewMatrix*vec4(position,1.0);',
+    '  vec3 n=normalize(mat3(modelViewMatrix)*aNormal);',
+    '  vec3 V=normalize(-mv.xyz);',
+    '  float em=aMat.y; bool atmo=em>2.5; bool night=(em>1.5&&em<2.5); bool glowy=(em>0.5&&em<1.5);',
+    '  float rim=pow(1.0-abs(dot(n,V)),2.5);',
+    '  float sz=uSize*(0.85+0.3*aSeed); vec3 c=vec3(0.0); bool cull=false;',
+    '  if(uPass<0.5){',
+    '    if(atmo) cull=true;',
+    '    else{',
+    '      vec3 L=normalize(mat3(viewMatrix)*uLightDir); vec3 L2=normalize(mat3(viewMatrix)*vec3(-0.7,0.2,-0.5));',
+    '      float nl=dot(n,L); float wrap=clamp((nl+0.3)/1.3,0.0,1.0); float fill=max(dot(n,L2),0.0);',
+    '      float spec=pow(max(dot(n,normalize(L+V)),0.0),38.0)*aMat.x;',
+    '      vec3 base=aColor*(0.96+0.08*fract(aSeed*91.7));',
+    '      c=base*(0.2+0.1*n.y+0.95*wrap*vec3(1.0,0.96,0.9)+0.3*fill*vec3(0.45,0.6,1.0))+spec*1.3+base*rim*0.3;',
+    '      if(glowy) c=aColor*1.3+c*0.1;',
+    '      if(night) c+=aColor*smoothstep(0.15,-0.2,nl)*1.6;',
+    '      c+=uMorph*0.15*vec3(0.4,0.75,1.0);',
+    '      c=1.0-exp(-c*1.3);',
+    '    }',
+    '  } else {',
+    '    if(uLight>0.5) cull=true;',
+    '    else if(atmo){ c=aColor*rim*0.55; sz*=3.0; }',
+    '    else if(glowy){ c=aColor*0.16; sz*=3.5; }',
+    '    else cull=true;',
     '  }',
-    '  vColor = c; vA = a;',
-    '  gl_Position = projectionMatrix * mv;',
+    '  if(uMono>0.5){ float lum=dot(c,vec3(0.299,0.587,0.114));',
+    '    if(uLight>0.5) c=vec3(mix(0.72,0.03,clamp(lum*1.25,0.0,1.0))); else c=vec3(min(lum*1.15,1.0)); }',
+    '  vColor=c;',
+    '  gl_PointSize=clamp(sz*uScale/(-mv.z),1.0,64.0);',
+    '  gl_Position=cull?vec4(2.0,2.0,2.0,1.0):projectionMatrix*mv;',
     '}',
   ].join('\n')
   var FRAG = [
-    'varying vec3 vColor; varying float vA;',
-    'void main(){',
-    '  float d = length(gl_PointCoord - 0.5);',
-    '  if (d > 0.5) discard;',
-    '  float a = pow(smoothstep(0.5, 0.04, d), 1.4);',
-    '  gl_FragColor = vec4(vColor, a * vA);',
-    '}',
+    'uniform float uPass; varying vec3 vColor;',
+    'void main(){ float d=length(gl_PointCoord-0.5); if(d>0.5) discard;',
+    '  if(uPass<0.5){ gl_FragColor=vec4(vColor*(1.0-0.4*smoothstep(0.2,0.5,d)),1.0); }',
+    '  else { float a=pow(smoothstep(0.5,0.0,d),2.0); gl_FragColor=vec4(vColor,a); } }',
   ].join('\n')
   var FVERT = [
     'uniform vec2 uOrigin, uCenter; uniform float uRip, uScale; varying float vA;',
@@ -1262,7 +1701,7 @@
     '  vec3 p = position + vec3(uOrigin.x, 0.0, uOrigin.y);',
     '  float d = length(p.xz - uCenter);',
     '  float ring = exp(-pow((d - uRip) * 2.2, 2.0));',
-    '  vA = smoothstep(8.5, 1.0, d) * (0.2 + ring * 0.9);',
+    '  vA = smoothstep(8.5, 1.0, d) * (0.2 + ring * 0.9) * (1.0 - 0.8 * exp(-pow(d / 0.32, 2.0)));',
     '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
     '  gl_PointSize = clamp(0.03 * uScale / (-mv.z) * (1.0 + ring * 1.2), 1.0, 12.0);',
     '  gl_Position = projectionMatrix * mv;',
@@ -1274,9 +1713,7 @@
     '  gl_FragColor = vec4(uFloorCol, smoothstep(0.5, 0.1, d) * vA); }',
   ].join('\n')
 
-  /* ================================================================
-     Komponent
-     ================================================================ */
+  /* ================= Komponent ================= */
   var CSS = [
     ':host{display:block;position:relative;width:100%;height:100%;min-height:320px;overflow:hidden;outline:none;',
     '  background:var(--mh-bg,#070912);color:var(--mh-text,#e8ecff);--a:var(--mh-accent,#5ef2ff);',
@@ -1314,18 +1751,7 @@
     })
     return window.__mhThree
   }
-
   var shapeCache = {}
-  function getShapes(N) {
-    if (!shapeCache[N])
-      shapeCache[N] = SHAPES.map(function (s) {
-        var sh = s.build(N)
-        sh.id = s.id
-        sh.label = s.label
-        return sh
-      })
-    return shapeCache[N]
-  }
 
   var Base = typeof HTMLElement !== 'undefined' ? HTMLElement : function () {}
   class MorphHuman extends Base {
@@ -1333,7 +1759,6 @@
       super()
       this._started = false
     }
-
     connectedCallback() {
       if (this._started) return
       this._started = true
@@ -1352,7 +1777,6 @@
       this._destroy()
       this._started = false
     }
-
     static get observedAttributes() {
       return ['theme']
     }
@@ -1360,17 +1784,24 @@
       if (this._renderer) this._applyTheme()
     }
 
+    _shape(i) {
+      var c = shapeCache[this._N] || (shapeCache[this._N] = [])
+      if (!c[i]) {
+        var s = SHAPES[i].build(this._N)
+        s.id = SHAPES[i].id
+        s.label = SHAPES[i].label
+        c[i] = s
+      }
+      return c[i]
+    }
     _applyTheme() {
       var THREE = window.THREE,
         th = this.getAttribute('theme') || 'color'
       var mono = th === 'mono-dark' || th === 'mono-light',
         light = th === 'mono-light'
-      var blend = light ? THREE.NormalBlending : THREE.AdditiveBlending
-      ;[this._matCore, this._matGlow, this._floorMat].forEach(function (m) {
-        m.blending = blend
-        m.needsUpdate = true
-      })
-      ;[this._matCore, this._matGlow].forEach(function (m) {
+      this._floorMat.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending
+      this._floorMat.needsUpdate = true
+      ;[this._matSolid, this._matGlow].forEach(function (m) {
         m.uniforms.uMono.value = mono ? 1 : 0
         m.uniforms.uLight.value = light ? 1 : 0
       })
@@ -1380,7 +1811,6 @@
       else if (mono) fc.set(0.85, 0.85, 0.85)
       else fc.set(0.35, 0.72, 1.0)
     }
-
     next() {
       this._go((this._idx + 1) % SHAPES.length)
     }
@@ -1402,9 +1832,10 @@
       this._auto = this.getAttribute('auto') !== 'false'
       var labels = this.getAttribute('labels') !== 'false'
       var coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches
-      var N = coarse || (navigator.hardwareConcurrency || 8) <= 4 ? 16000 : 30000
+      var N =
+        parseInt(this.getAttribute('count'), 10) ||
+        (coarse || (navigator.hardwareConcurrency || 8) <= 4 ? 22000 : 45000)
       this._N = N
-      this._shapes = getShapes(N)
       if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0')
 
       root.innerHTML =
@@ -1414,8 +1845,7 @@
         (labels
           ? '<div class="name"><b></b><div class="bar"><i></i></div></div><div class="dots" role="group" aria-label="Shakllar"></div>'
           : '') +
-        '<div class="hint">W A S D yurish · Shift yugurish · Space keyingi shakl · sudrab aylantiring</div>' +
-        '<div class="joy"><i></i></div>'
+        '<div class="hint">W A S D yurish · Shift yugurish · Space keyingi shakl · sudrab aylantiring</div><div class="joy"><i></i></div>'
       var canvas = (this._canvas = root.querySelector('canvas'))
       this._nameEl = root.querySelector('.name b')
       this._fillEl = root.querySelector('.bar i')
@@ -1436,7 +1866,6 @@
       }
       if (this.getAttribute('controls') !== 'false') root.querySelector('.joy').classList.add('on')
 
-      // three.js
       var renderer = (this._renderer = new THREE.WebGLRenderer({
         canvas: canvas,
         antialias: true,
@@ -1445,61 +1874,70 @@
       }))
       renderer.setClearColor(0x000000, 0)
       var scene = (this._scene = new THREE.Scene())
-      var camera = (this._camera = new THREE.PerspectiveCamera(38, 1, 0.05, 100))
+      this._camera = new THREE.PerspectiveCamera(38, 1, 0.05, 100)
 
-      var geo = (this._geo = new THREE.BufferGeometry())
+      var geo = (this._geo = new THREE.BufferGeometry()),
+        i
       var cur = (this._cur = new Float32Array(N * 3)),
-        curCol = (this._curCol = new Float32Array(N * 3))
+        curCol = (this._curCol = new Float32Array(N * 3)),
+        curN = (this._curN = new Float32Array(N * 3)),
+        curM = (this._curM = new Float32Array(N * 2))
       var seed = new Float32Array(N)
       this._from = new Float32Array(N * 3)
       this._fromCol = new Float32Array(N * 3)
+      this._fromN = new Float32Array(N * 3)
+      this._fromM = new Float32Array(N * 2)
       this._target = new Float32Array(N * 3)
+      this._targetN = new Float32Array(N * 3)
       this._delay = new Float32Array(N)
       this._phase = new Float32Array(N)
-      for (var i = 0; i < N; i++) {
+      for (i = 0; i < N; i++) {
         seed[i] = rnd()
         this._delay[i] = rnd() * 0.9
         this._phase[i] = rnd() * TAU
         cur[i * 3] = (rnd() - 0.5) * 6
         cur[i * 3 + 1] = rnd() * 3
         cur[i * 3 + 2] = (rnd() - 0.5) * 6
-        curCol[i * 3] = curCol[i * 3 + 1] = curCol[i * 3 + 2] = 0.25
+        curCol[i * 3] = curCol[i * 3 + 1] = curCol[i * 3 + 2] = 0.4
+        curN[i * 3 + 1] = 1
       }
       geo.setAttribute('position', new THREE.BufferAttribute(cur, 3))
       geo.setAttribute('aColor', new THREE.BufferAttribute(curCol, 3))
+      geo.setAttribute('aNormal', new THREE.BufferAttribute(curN, 3))
+      geo.setAttribute('aMat', new THREE.BufferAttribute(curM, 2))
       geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1))
-      function mk(glow, size) {
+      function mk(pass) {
         return new THREE.ShaderMaterial({
           vertexShader: VERT,
           fragmentShader: FRAG,
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
+          transparent: pass === 1,
+          depthWrite: pass === 0,
+          blending: pass === 1 ? THREE.AdditiveBlending : THREE.NormalBlending,
           uniforms: {
             uTime: { value: 0 },
             uScale: { value: 600 },
-            uSize: { value: size },
-            uGlow: { value: glow },
-            uScan: { value: 0 },
+            uSize: { value: 0.011 },
             uMorph: { value: 0 },
             uMono: { value: 0 },
             uLight: { value: 0 },
+            uPass: { value: pass },
+            uLightDir: { value: new THREE.Vector3(0.5, 0.72, 0.62).normalize() },
           },
         })
       }
-      this._matCore = mk(0, 0.011)
-      this._matGlow = mk(1, 0.042)
+      this._matSolid = mk(0)
+      this._matGlow = mk(1)
       this._group = new THREE.Group()
       this._group.rotation.order = 'YXZ'
-      var core = new THREE.Points(geo, this._matCore),
+      var solid = new THREE.Points(geo, this._matSolid),
         glow = new THREE.Points(geo, this._matGlow)
-      core.frustumCulled = glow.frustumCulled = false
+      solid.frustumCulled = glow.frustumCulled = false
+      glow.renderOrder = 2
       this._glowPts = glow
+      this._group.add(solid)
       this._group.add(glow)
-      this._group.add(core)
       scene.add(this._group)
 
-      // zamin: nuqtali to'r
       var fl = [],
         gx,
         gz
@@ -1522,11 +1960,10 @@
       })
       this._floor = new THREE.Points(fgeo, this._floorMat)
       this._floor.frustumCulled = false
+      this._floor.renderOrder = 1
       scene.add(this._floor)
-
       this._applyTheme()
 
-      // holat
       this._pos = new THREE.Vector3()
       this._yaw = 0
       this._speed = 0
@@ -1538,13 +1975,15 @@
       this._timer = 0
       this._morphT = 0
       this._time = 0
+      this._sz = 0.011
       this._keys = {}
       this._joy = { x: 0, y: 0 }
       this._active = false
       this._from.set(cur)
       this._fromCol.set(curCol)
+      this._fromN.set(curN)
+      this._fromM.set(curM)
       this._updateUI()
-
       this._bind()
       this._ro = new ResizeObserver(function () {
         self._resize()
@@ -1569,6 +2008,14 @@
       this._visible = true
       this._last = performance.now()
       this._raf = requestAnimationFrame(this._tickB)
+      // qolgan shakllarni asta-sekin oldindan tayyorlash (qotib qolmaslik uchun)
+      var q = 1
+      ;(function pre() {
+        if (self._renderer && q < SHAPES.length) {
+          self._shape(q++)
+          setTimeout(pre, 300)
+        }
+      })()
     }
 
     _bind() {
@@ -1609,7 +2056,6 @@
         self._active = false
         self._keys = {}
       })
-
       var drag = null
       canvas.addEventListener('pointerdown', function (e) {
         drag = { x: e.clientX, y: e.clientY }
@@ -1634,11 +2080,10 @@
           'wheel',
           function (e) {
             e.preventDefault()
-            self._camDist = clamp(self._camDist + e.deltaY * 0.004, 1.8, 9)
+            self._camDist = clamp(self._camDist + e.deltaY * 0.004, 1.2, 9)
           },
           { passive: false }
         )
-
       var joyEl = root.querySelector('.joy'),
         knob = joyEl.firstElementChild,
         jid = null
@@ -1674,14 +2119,14 @@
       joyEl.addEventListener('pointerup', je)
       joyEl.addEventListener('pointercancel', je)
     }
-
     _hideHint() {
       if (this._hint) this._hint.classList.add('off')
     }
-
     _go(i) {
       this._from.set(this._cur)
       this._fromCol.set(this._curCol)
+      this._fromN.set(this._curN)
+      this._fromM.set(this._curM)
       this._idx = i
       this._timer = 0
       this._morphT = 0
@@ -1698,7 +2143,6 @@
         for (var i = 0; i < this._dotEls.length; i++)
           this._dotEls[i].setAttribute('aria-current', i === this._idx ? 'true' : 'false')
     }
-
     _resize() {
       var w = this.clientWidth || 600,
         h = this.clientHeight || 400,
@@ -1708,7 +2152,7 @@
       this._camera.aspect = w / h
       this._camera.updateProjectionMatrix()
       var sc = (h * dpr) / (2 * Math.tan((this._camera.fov * Math.PI) / 360))
-      this._matCore.uniforms.uScale.value = sc
+      this._matSolid.uniforms.uScale.value = sc
       this._matGlow.uniforms.uScale.value = sc
       this._floorMat.uniforms.uScale.value = sc
       this._aspect = w / h
@@ -1725,7 +2169,6 @@
         J = this._joy,
         i
 
-      // kirish
       var ix = (K['d'] || K['arrowright'] ? 1 : 0) - (K['a'] || K['arrowleft'] ? 1 : 0) + J.x
       var iz = (K['w'] || K['arrowup'] ? 1 : 0) - (K['s'] || K['arrowdown'] ? 1 : 0) + J.y
       var il = Math.hypot(ix, iz)
@@ -1756,7 +2199,6 @@
       var move = clamp(this._speed / 2.0, 0, 1.4)
       this._walk += this._speed * dt * 3.4
 
-      // shakl vaqti
       if (this._morphT < 4) this._morphT += dt
       this._timer += dt
       if (this._auto && this._timer >= this._interval) this.next()
@@ -1764,63 +2206,99 @@
         this._fillEl.style.transform =
           'scaleX(' + (this._auto ? clamp(this._timer / this._interval, 0, 1) : 1) + ')'
 
-      // nishon nuqtalar
-      var sh = this._shapes[this._idx],
-        target = this._target,
+      var sh = this._shape(this._idx),
+        tp = this._target,
+        tn = this._targetN,
         human = sh.id === 'odam'
       if (human) {
-        animateHuman(sh, target, N, t, move, run, this._walk)
+        animateHuman(sh, tp, tn, N, t, move, run, this._walk)
       } else {
+        var a = sh.mode === 'sway' ? Math.sin(t * 0.6) * 0.55 : t * (sh.spin || 0.5)
+        sh.curA = a
         if (sh.dyn) for (i = sh.dynStart; i < N; i++) sh.dyn(i, t)
-        var a = sh.mode === 'sway' ? Math.sin(t * 0.6) * 0.55 : t * 0.5,
-          c = Math.cos(a),
+        var c = Math.cos(a),
           s = Math.sin(a),
-          sp = sh.pos
+          tl = sh.tilt || 0,
+          ctl = Math.cos(tl),
+          stl = Math.sin(tl),
+          cyy = sh.cy || 0,
+          sp = sh.pos,
+          sn = sh.nrm
         for (i = 0; i < N; i++) {
           var j = i * 3,
             x = sp[j],
-            z = sp[j + 2]
-          target[j] = x * c + z * s
-          target[j + 1] = sp[j + 1]
-          target[j + 2] = -x * s + z * c
+            y = sp[j + 1],
+            z = sp[j + 2],
+            x1 = x * c + z * s,
+            z1 = -x * s + z * c
+          tp[j] = x1 * ctl - y * stl
+          tp[j + 1] = x1 * stl + y * ctl + cyy
+          tp[j + 2] = z1
+          x = sn[j]
+          y = sn[j + 1]
+          z = sn[j + 2]
+          x1 = x * c + z * s
+          z1 = -x * s + z * c
+          tn[j] = x1 * ctl - y * stl
+          tn[j + 1] = x1 * stl + y * ctl
+          tn[j + 2] = z1
         }
       }
-      var tc = sh.col,
-        MORPH = 2.5,
+      var MORPH = 2.5,
         dur = MORPH - 0.9,
         mt = this._morphT
       var cur = this._cur,
         cc = this._curCol,
+        cn = this._curN,
+        cm = this._curM,
         fr = this._from,
         fc = this._fromCol,
+        fn = this._fromN,
+        fm = this._fromM,
         dl = this._delay,
         ph = this._phase
-      for (i = 0; i < N; i++) {
-        var q = i * 3,
-          p = clamp((mt - dl[i]) / dur, 0, 1),
-          e = p >= 1 ? 1 : ease(p)
-        var arc = (1 - e) * e * 0.7 * Math.sin(ph[i]),
-          jt = Math.sin(t * 2 + ph[i]) * 0.003
-        cur[q] = fr[q] + (target[q] - fr[q]) * e + arc + jt
-        cur[q + 1] = fr[q + 1] + (target[q + 1] - fr[q + 1]) * e + arc * 0.5 + jt
-        cur[q + 2] = fr[q + 2] + (target[q + 2] - fr[q + 2]) * e - arc + jt
-        cc[q] = fc[q] + (tc[q] - fc[q]) * e
-        cc[q + 1] = fc[q + 1] + (tc[q + 1] - fc[q + 1]) * e
-        cc[q + 2] = fc[q + 2] + (tc[q + 2] - fc[q + 2]) * e
+      var tc = sh.col,
+        tm = sh.mat
+      if (mt >= MORPH) {
+        cur.set(tp)
+        cc.set(tc)
+        cn.set(tn)
+        cm.set(tm)
+      } else {
+        for (i = 0; i < N; i++) {
+          var q = i * 3,
+            r = i * 2,
+            p = clamp((mt - dl[i]) / dur, 0, 1),
+            e = p >= 1 ? 1 : ease(p)
+          var arc = (1 - e) * e * 0.7 * Math.sin(ph[i])
+          cur[q] = fr[q] + (tp[q] - fr[q]) * e + arc
+          cur[q + 1] = fr[q + 1] + (tp[q + 1] - fr[q + 1]) * e + arc * 0.5
+          cur[q + 2] = fr[q + 2] + (tp[q + 2] - fr[q + 2]) * e - arc
+          cc[q] = fc[q] + (tc[q] - fc[q]) * e
+          cc[q + 1] = fc[q + 1] + (tc[q + 1] - fc[q + 1]) * e
+          cc[q + 2] = fc[q + 2] + (tc[q + 2] - fc[q + 2]) * e
+          cn[q] = fn[q] + (tn[q] - fn[q]) * e
+          cn[q + 1] = fn[q + 1] + (tn[q + 1] - fn[q + 1]) * e
+          cn[q + 2] = fn[q + 2] + (tn[q + 2] - fn[q + 2]) * e
+          cm[r] = fm[r] + (tm[r] - fm[r]) * e
+          cm[r + 1] = fm[r + 1] + (tm[r + 1] - fm[r + 1]) * e
+        }
       }
-      this._geo.attributes.position.needsUpdate = true
-      this._geo.attributes.aColor.needsUpdate = true
+      var at = this._geo.attributes
+      at.position.needsUpdate = true
+      at.aColor.needsUpdate = true
+      at.aNormal.needsUpdate = true
+      at.aMat.needsUpdate = true
 
+      this._sz += (sh.sz - this._sz) * Math.min(1, dt * 3)
       var morphGlow = clamp(1 - Math.abs(mt - MORPH * 0.5) / (MORPH * 0.5), 0, 1)
-      var u1 = this._matCore.uniforms,
-        u2 = this._matGlow.uniforms,
-        scan = ((t * 0.45) % 2.6) - 0.3
+      var u1 = this._matSolid.uniforms,
+        u2 = this._matGlow.uniforms
       u1.uTime.value = u2.uTime.value = t
-      u1.uScan.value = u2.uScan.value = scan
       u1.uMorph.value = u2.uMorph.value = morphGlow
+      u1.uSize.value = u2.uSize.value = this._sz
 
-      // haykal holati
-      var bob = human ? Math.abs(Math.sin(this._walk)) * 0.04 * move : Math.sin(t * 1.3) * 0.04
+      var bob = human ? Math.abs(Math.sin(this._walk)) * 0.04 * move : Math.sin(t * 1.3) * 0.03
       this._group.position.set(this._pos.x, bob, this._pos.z)
       this._group.rotation.y = this._yaw
       this._group.rotation.x = human ? 0.05 * clamp(this._speed / 4.6, 0, 1) : 0
@@ -1832,10 +2310,9 @@
       fu.uCenter.value.set(this._pos.x, this._pos.z)
       fu.uRip.value = (t * 1.1) % 8
 
-      // kamera
       var asp = this._aspect || 1,
-        dist = this._camDist * (asp < 1 ? Math.pow(1 / asp, 0.7) : 1)
-      var ty = 0.98,
+        dist = this._camDist * (asp < 1 ? Math.pow(1 / asp, 0.7) : 1),
+        ty = 0.98,
         cp = Math.cos(this._camPitch)
       this._camera.position.set(
         this._pos.x + Math.sin(this._camYaw) * cp * dist,
@@ -1856,13 +2333,17 @@
         window.removeEventListener('keyup', this._onKeyUp)
       }
       if (this._renderer) {
+        this._geo.dispose()
+        this._matSolid.dispose()
+        this._matGlow.dispose()
+        this._floorMat.dispose()
         this._renderer.dispose()
         this._renderer = null
       }
     }
   }
 
-  MorphHuman._build = { SHAPES: SHAPES, getShapes: getShapes }
+  MorphHuman._build = { SHAPES: SHAPES }
   if (typeof customElements !== 'undefined' && !customElements.get('morph-human'))
     customElements.define('morph-human', MorphHuman)
   if (typeof window !== 'undefined') window.MorphHuman = MorphHuman
