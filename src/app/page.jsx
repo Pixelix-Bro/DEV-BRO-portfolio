@@ -1,30 +1,26 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import Link from 'next/link'
 import { useGSAP } from '@gsap/react'
+import { Icon } from '@iconify/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Icon } from '@iconify/react'
 import {
   ArrowDown,
   ArrowUpRight,
+  Code2,
   Download,
+  ExternalLink,
   Info,
-  Terminal,
   Layers,
   Sparkles,
-  ExternalLink,
-  Code2,
+  Terminal,
 } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useRef } from 'react'
 
-import {
-  personalInfo,
-  projects,
-  skills,
-  capabilities,
-} from '@/data/portfolioData'
+import MorphHuman from '@/components/MorphHuman'
 import SkillIcon, { skillColors } from '@/components/SkillIcon'
+import { capabilities, personalInfo, projects, skills } from '@/data/portfolioData'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -247,7 +243,10 @@ export default function HomePage() {
   const bioWords = personalInfo.heroBio.split(' ')
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col relative selection:bg-white selection:text-black">
+    <div
+      ref={containerRef}
+      className="w-full flex flex-col relative selection:bg-white selection:text-black"
+    >
       {/* ------------------------------------------------------------------------- */}
       {/* SECTION 1: HERO (Massive Editorial Typography, Whitespace, Parallax)     */}
       {/* ------------------------------------------------------------------------- */}
@@ -283,7 +282,7 @@ export default function HomePage() {
         {/* Main Hero Typography & Portrait Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto py-12">
           {/* Left: Giant Typography */}
-          <div ref={heroTextRef} className="lg:col-span-8 flex flex-col gap-6">
+          <div ref={heroTextRef} className="lg:col-span-8 grow flex flex-col gap-6">
             <div className="overflow-hidden">
               <span className="hero-line block font-mono text-sm md:text-base uppercase tracking-widest text-neutral-400">
                 {personalInfo.heroGreeting}
@@ -318,12 +317,7 @@ export default function HomePage() {
           {/* Right: Portrait & Status Badge */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-end gap-6">
             <div className="hero-image-wrap relative group w-[220px] md:w-[280px] aspect-[4/5] rounded-2xl overflow-hidden border border-white/20 bg-neutral-900 shadow-2xl">
-              <img
-                src={personalInfo.avatar}
-                alt={personalInfo.name}
-                className="w-full h-full object-cover grayscale contrast-125 transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0"
-                data-cursor="view"
-              />
+              <MorphHuman height={500} theme="mono-dark" interval="10" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-[11px] font-mono text-white/90">
                 <span>{personalInfo.brandName}</span>
@@ -371,7 +365,10 @@ export default function HomePage() {
                 data-cursor="link"
               >
                 <span>{s.name}</span>
-                <ArrowUpRight size={12} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                <ArrowUpRight
+                  size={12}
+                  className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                />
               </a>
             ))}
           </div>
@@ -442,7 +439,10 @@ export default function HomePage() {
             data-cursor="link"
           >
             <span>VIEW ALL PROJECTS</span>
-            <ArrowUpRight size={13} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <ArrowUpRight
+              size={13}
+              className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+            />
           </Link>
         </div>
 
@@ -563,23 +563,15 @@ export default function HomePage() {
               className="mobile-project-card p-6 rounded-3xl border border-white/15 bg-neutral-950 flex flex-col gap-6"
             >
               <div className="relative aspect-[16/10] rounded-2xl overflow-hidden border border-white/10">
-                <img
-                  src={proj.photo}
-                  alt={proj.title}
-                  className="w-full h-full object-cover"
-                />
+                <img src={proj.photo} alt={proj.title} className="w-full h-full object-cover" />
                 <span className="absolute top-3 left-3 font-mono text-xs bg-black/80 px-2.5 py-0.5 rounded-full border border-white/20 text-white">
                   {proj.number}
                 </span>
               </div>
 
               <div className="flex flex-col gap-3">
-                <h3 className="text-2xl font-bold uppercase text-white">
-                  {proj.title}
-                </h3>
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  {proj.caption}
-                </p>
+                <h3 className="text-2xl font-bold uppercase text-white">{proj.title}</h3>
+                <p className="text-xs text-neutral-400 leading-relaxed">{proj.caption}</p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {proj.texnologiya.map((t) => (
                     <span
@@ -635,10 +627,7 @@ export default function HomePage() {
         </div>
 
         {/* Desktop Horizontal Track */}
-        <div
-          ref={horizontalTrackRef}
-          className="hidden lg:flex gap-8 px-16 w-max items-stretch"
-        >
+        <div ref={horizontalTrackRef} className="hidden lg:flex gap-8 px-16 w-max items-stretch">
           {capabilities.map((cap) => (
             <div
               key={cap.num}
@@ -646,9 +635,7 @@ export default function HomePage() {
               data-cursor="view"
             >
               <div className="flex flex-col gap-4">
-                <span className="font-mono text-2xl font-bold text-neutral-500">
-                  {cap.num}
-                </span>
+                <span className="font-mono text-2xl font-bold text-neutral-500">{cap.num}</span>
                 <h3 className="text-3xl font-bold uppercase tracking-tight text-white">
                   {cap.title}
                 </h3>
@@ -681,11 +668,16 @@ export default function HomePage() {
               <div className="flex flex-col gap-3">
                 <span className="font-mono text-xl font-bold text-neutral-500">{cap.num}</span>
                 <h3 className="text-2xl font-bold uppercase text-white">{cap.title}</h3>
-                <p className="text-sm text-neutral-400 font-light leading-relaxed">{cap.description}</p>
+                <p className="text-sm text-neutral-400 font-light leading-relaxed">
+                  {cap.description}
+                </p>
               </div>
               <div className="flex flex-wrap gap-1.5 pt-4 border-t border-white/10">
                 {cap.keywords.map((kw) => (
-                  <span key={kw} className="font-mono text-[10px] px-2 py-0.5 rounded border border-white/10 text-neutral-300">
+                  <span
+                    key={kw}
+                    className="font-mono text-[10px] px-2 py-0.5 rounded border border-white/10 text-neutral-300"
+                  >
                     {kw}
                   </span>
                 ))}
@@ -710,7 +702,8 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="font-mono text-xs text-neutral-400 max-w-sm">
-              Hands-on technical stack utilized across modern production systems and web applications.
+              Hands-on technical stack utilized across modern production systems and web
+              applications.
             </p>
           </div>
 
@@ -730,7 +723,11 @@ export default function HomePage() {
                       0{i + 1}
                     </span>
                     <div className="flex items-center gap-4">
-                      <SkillIcon name={skill.name} size={32} className="shrink-0 transition-transform group-hover:scale-125" />
+                      <SkillIcon
+                        name={skill.name}
+                        size={32}
+                        className="shrink-0 transition-transform group-hover:scale-125"
+                      />
                       <span className="text-2xl md:text-5xl font-light tracking-tight text-neutral-300 group-hover:text-[var(--hover-color)] group-hover:font-medium group-hover:translate-x-3 transition-all duration-300">
                         {skill.name}
                       </span>
@@ -738,12 +735,13 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <span
-                      className="font-mono text-xs uppercase tracking-widest border border-white/10 px-3 py-1 rounded-full text-neutral-400 group-hover:border-[var(--hover-color)] transition-colors"
-                    >
+                    <span className="font-mono text-xs uppercase tracking-widest border border-white/10 px-3 py-1 rounded-full text-neutral-400 group-hover:border-[var(--hover-color)] transition-colors">
                       {skill.category}
                     </span>
-                    <ArrowUpRight size={18} className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    <ArrowUpRight
+                      size={18}
+                      className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
+                    />
                   </div>
                 </div>
               )
@@ -836,7 +834,8 @@ export default function HomePage() {
               COMMITTED TO DIGITAL EXCELLENCE.
             </h2>
             <p className="font-mono text-xs text-neutral-400">
-              Transforming functional concepts into sleek, fluid digital systems with emphasis on code quality, responsiveness, and performance.
+              Transforming functional concepts into sleek, fluid digital systems with emphasis on
+              code quality, responsiveness, and performance.
             </p>
             <div className="pt-4">
               <Link
