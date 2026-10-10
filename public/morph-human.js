@@ -1,6 +1,6 @@
 /*!
- * <morph-human> v2 — REALISTIK zarrachali raqamli komponent
- * Odam (soch, yuz, kiyim, barmoqlar), noutbuk, miya, Yer (bulut, atmosfera, Oy),
+ * <morph-human> v3 — oq-qora, fonsiz, REALISTIK zarrachali komponent
+ * Telefon, noutbuk, miya, Yer (bulut, atmosfera, Oy),
  * raketa (olov, tutun) va dizayn mольберти (qalam, qog'oz) — hammasi real yoritish bilan.
  *
  * Ishlatish:
@@ -10,7 +10,9 @@
  *
  * Atributlar: interval="10"  auto="false"  labels="false"  controls="false"  zoom
  *             count="45000" (zarrachalar soni, ko'p = realistikroq)
- *             theme="mono-dark" | "mono-light"
+ *             theme="mono-dark" (oq zarrachalar, standart) | "mono-light" (qora zarrachalar)
+ *             floor (zamin nuqtalarini yoqish), controls="true" (W A S D bilan siljitish)
+ *             Fon shaffof; rang uchun CSS: --mh-bg
  * Metodlar:   el.next()  el.prev()  el.goTo(i)       Hodisa: "shapechange"
  * Boshqaruv:  W A S D / strelkalar, Shift, Space, sichqoncha bilan aylantirish.
  */
@@ -471,253 +473,131 @@
     }
   }
 
-  /* ================= 1. ODAM ================= */
-  function M(type, side, p1, p2) {
-    return { type: type, side: side, y1: p1[0], z1: p1[1], y2: p2[0], z2: p2[1] }
-  }
-  function buildHuman(N) {
-    var HB = {
-      type: new Uint8Array(N),
-      side: new Int8Array(N),
-      y1: new Float32Array(N),
-      z1: new Float32Array(N),
-      y2: new Float32Array(N),
-      z2: new Float32Array(N),
-    }
+  /* ================= 1. TELEFON — titan korpus, shisha ekran, ilovalar, orqada kamera bloki ================= */
+  function buildPhone(N) {
     var prims = [],
-      M0 = M(0, 0, [0, 0], [0, 0])
-    var SK = [0.84, 0.62, 0.49],
-      TEE = [0.8, 0.82, 0.86],
-      JEAN = [0.12, 0.2, 0.38],
-      HAIR = [0.13, 0.085, 0.06],
-      SHOE = [0.9, 0.9, 0.92],
-      SOLE = [0.12, 0.12, 0.13]
-    function nz(x, y, z, f, a) {
-      return (fbm(x * f, y * f, z * f) - 0.5) * a
+      r,
+      c,
+      X = 0.36,
+      Y0 = 0.2,
+      Y1 = 1.7,
+      CY = 0.95,
+      ZF = 0.0375
+    var TI = function (x, y, z) {
+      var v = 1 + (vnoise(x * 110, y * 110, z * 110) - 0.5) * 0.07
+      return [0.55 * v, 0.56 * v, 0.6 * v]
     }
-    function skin(x, y, z) {
-      var n = 1 + nz(x, y, z, 22, 0.16)
-      return [SK[0] * n, SK[1] * n, SK[2] * n]
+    var GL = function () {
+      return [0.012, 0.014, 0.03]
     }
-    function tee(x, y, z) {
-      var n = 1 + nz(x, y, z, 60, 0.12)
-      return [TEE[0] * n, TEE[1] * n, TEE[2] * n]
-    }
-    function jean(x, y, z) {
-      var n = 1 + nz(x, y, z, 70, 0.18) + Math.sin(y * 160) * 0.025
-      return [JEAN[0] * n, JEAN[1] * n, JEAN[2] * n]
-    }
-    function shoeCol(x, y) {
-      return y < 0.03 ? SOLE : SHOE
-    }
-    var SP = 0.2
-    // Tana: ko'ylak + belbog'dan pastda jinsi
+    prims.push(cub([0, CY, 0], [X, 0.75, 0.037], { col: TI, spec: 0.6, boost: 1.1 })) // korpus
+    ;[-X, X].forEach(function (x) {
+      prims.push(tube([x, Y0, 0], [x, Y1, 0], 0.037, 0.037, { col: TI, spec: 0.7, boost: 1.4 }))
+    })
+    ;[Y0, Y1].forEach(function (y) {
+      prims.push(tube([-X, y, 0], [X, y, 0], 0.037, 0.037, { col: TI, spec: 0.7, boost: 1.4 }))
+    })
+    prims.push(cub([0, CY, ZF + 0.001], [0.335, 0.72, 0.0012], { col: GL, spec: 0.9, boost: 3 })) // ekran shishasi
     prims.push(
-      loft(
-        [
-          [1.47, 0.07, 0.07, 0],
-          [1.43, 0.17, 0.09, 0],
-          [1.4, 0.225, 0.108, 0],
-          [1.32, 0.225, 0.122, 0.004],
-          [1.22, 0.195, 0.115, 0],
-          [1.1, 0.165, 0.1, 0],
-          [1.02, 0.172, 0.103, 0],
-          [0.93, 0.185, 0.105, 0],
-          [0.88, 0.17, 0.095, 0],
-        ],
-        {
-          meta: M0,
-          spec: 0.06,
-          col: function (x, y, z) {
-            return y > 1.03 ? tee(x, y, z) : jean(x, y, z)
-          },
-        }
-      )
-    )
-    prims.push(
-      tube([0, 1.43, 0], [0, 1.56, 0.012], 0.052, 0.046, { meta: M0, spec: SP, col: skin })
-    ) // bo'yin
-    prims.push(
-      ell([0, 1.675, 0.012], [0.093, 0.117, 0.106], { meta: M0, spec: SP, col: skin, boost: 1.2 })
-    ) // bosh
-    prims.push(ell([0, 1.612, 0.042], [0.062, 0.055, 0.062], { meta: M0, spec: SP, col: skin })) // iyak
-    prims.push(
-      ell([0, 1.664, 0.118], [0.014, 0.022, 0.02], { meta: M0, spec: 0.3, col: skin, boost: 3 })
-    ) // burun
-    prims.push(
-      ell([-0.094, 1.67, 0], [0.012, 0.026, 0.02], { meta: M0, spec: SP, col: skin, boost: 2 })
-    ) // quloqlar
-    prims.push(
-      ell([0.094, 1.67, 0], [0.012, 0.026, 0.02], { meta: M0, spec: SP, col: skin, boost: 2 })
-    )
-    ;[-1, 1].forEach(function (sd) {
-      // ko'zlar
+      ell([0, 1.64, ZF + 0.002], [0.05, 0.018, 0.004], {
+        col: function () {
+          return [0, 0, 0]
+        },
+        spec: 1,
+        boost: 4,
+      })
+    ) // Dynamic Island
+    var pal = [
+      [1, 0.35, 0.4],
+      [0.3, 0.8, 1],
+      [0.5, 0.95, 0.5],
+      [1, 0.8, 0.25],
+      [0.8, 0.5, 1],
+      [1, 1, 1],
+    ]
+    function icon(x, y, col, h) {
       prims.push(
-        ell([sd * 0.036, 1.69, 0.104], [0.0135, 0.0095, 0.009], {
-          meta: M0,
-          spec: 0.85,
+        cub([x, y, ZF + 0.003], [h, h, 0.0015], {
           col: function () {
-            return [0.93, 0.93, 0.91]
+            return col
           },
-          boost: 9,
-        })
-      )
-      prims.push(
-        ell([sd * 0.036, 1.69, 0.1135], [0.0068, 0.0068, 0.0045], {
-          meta: M0,
-          spec: 0.9,
-          col: function () {
-            return [0.22, 0.34, 0.52]
-          },
-          boost: 12,
-        })
-      )
-      prims.push(
-        ell([sd * 0.036, 1.69, 0.1165], [0.0032, 0.0032, 0.002], {
-          meta: M0,
-          spec: 1,
-          col: function () {
-            return [0.01, 0.01, 0.02]
-          },
-          boost: 14,
-        })
-      )
-      prims.push(
-        tube([sd * 0.018, 1.713, 0.104], [sd * 0.056, 1.718, 0.096], 0.0042, 0.0036, {
-          meta: M0,
-          spec: 0.3,
-          col: function () {
-            return HAIR
-          },
+          em: 1,
           boost: 3,
         })
-      ) // qosh
-    })
+      )
+    }
+    for (r = 0; r < 5; r++)
+      for (c = 0; c < 4; c++)
+        icon((c - 1.5) * 0.15, 1.25 - r * 0.16, pal[(r * 4 + c) % pal.length], 0.05)
+    for (c = 0; c < 4; c++) icon((c - 1.5) * 0.15, 0.31, pal[(c + 2) % pal.length], 0.05) // dok
     prims.push(
-      ell([0, 1.64, 0.108], [0.022, 0.0065, 0.008], {
-        meta: M0,
-        spec: 0.45,
+      line([-0.12, 1.5, ZF + 0.003], [0.12, 1.5, ZF + 0.003], 0.05, {
         col: function () {
-          return [0.66, 0.32, 0.33]
+          return [1, 1, 1]
         },
-        boost: 5,
+        em: 1,
+        jit: 0.002,
+        nrm: [0, 0, 1],
+        boost: 3,
       })
-    ) // lablar
+    ) // soat
     prims.push(
-      ell([0, 1.627, 0.106], [0.024, 0.0075, 0.009], {
-        meta: M0,
-        spec: 0.45,
+      line([-0.08, 1.44, ZF + 0.003], [0.08, 1.44, ZF + 0.003], 0.02, {
         col: function () {
-          return [0.7, 0.34, 0.35]
+          return [0.7, 0.75, 0.85]
         },
-        boost: 5,
+        em: 1,
+        jit: 0.002,
+        nrm: [0, 0, 1],
+        boost: 3,
       })
     )
-    prims.push({
-      w: 0.11,
-      meta: M0,
-      spec: 0.35, // soch
-      col: function () {
-        var v = 0.7 + 0.8 * rnd()
-        return [HAIR[0] * v, HAIR[1] * v, HAIR[2] * v]
-      },
-      s: function (out) {
-        var q,
-          th,
-          tr = 0
-        do {
-          q = unit()
-          th =
-            (q[2] > 0 ? 0.28 + 1.15 * q[2] : 0.28 + 0.75 * q[2]) +
-            (vnoise(q[0] * 6, q[1] * 6, q[2] * 6) - 0.5) * 0.22
-          tr++
-        } while (q[1] < th && tr < 60)
-        var k = 1 + 0.05 * rnd()
-        out[0] = q[0] * 0.099 * k
-        out[1] = 1.682 + q[1] * 0.123 * k
-        out[2] = 0.006 + q[2] * 0.112 * k
-        out[3] = q[0]
-        out[4] = q[1]
-        out[5] = q[2]
-        out[6] = 0
-      },
-    })
-    ;[-1, 1].forEach(function (sd) {
-      var sh = [sd * 0.255, 1.4, 0],
-        el = [sd * 0.285, 1.13, 0.005],
-        wr = [sd * 0.292, 0.875, 0.01]
-      var m1 = M(1, sd, [1.4, 0], [1.13, 0.005]),
-        m2 = M(2, sd, [1.4, 0], [1.13, 0.005])
-      prims.push(ell(sh, [0.058, 0.062, 0.058], { meta: m1, spec: 0.08, col: tee }))
-      prims.push(
-        tube(sh, el, 0.052, 0.041, {
-          meta: m1,
-          spec: 0.1,
-          col: function (x, y, z, t) {
-            return t < 0.55 ? tee(x, y, z) : skin(x, y, z)
-          },
-        })
-      )
-      prims.push(tube(el, wr, 0.041, 0.03, { meta: m2, spec: SP, col: skin }))
-      var wx = sd * 0.293 // kaft va barmoqlar
-      prims.push(
-        ell([wx, 0.835, 0.014], [0.03, 0.05, 0.017], { meta: m2, spec: SP, col: skin, boost: 1.3 })
-      )
-      ;[-0.021, -0.007, 0.007, 0.021].forEach(function (dx, fi) {
-        var ln = [0.062, 0.075, 0.07, 0.054][fi],
-          x = wx + dx
-        prims.push(
-          tube([x, 0.8, 0.012], [x, 0.8 - ln, 0.026], 0.0085, 0.0062, {
-            meta: m2,
-            spec: SP,
-            col: skin,
-            boost: 2.2,
-          })
-        )
+    // Orqa tomon: kamera bloki
+    prims.push(
+      cub([-0.17, 1.47, -0.047], [0.15, 0.15, 0.011], {
+        col: function () {
+          return [0.3, 0.31, 0.34]
+        },
+        spec: 0.8,
+        boost: 1.4,
       })
+    )
+    ;[
+      [-0.24, 1.54],
+      [-0.24, 1.4],
+      [-0.1, 1.47],
+    ].forEach(function (p) {
       prims.push(
-        tube([wx - sd * 0.03, 0.845, 0.02], [wx - sd * 0.036, 0.785, 0.042], 0.011, 0.0085, {
-          meta: m2,
-          spec: SP,
-          col: skin,
-          boost: 2.2,
+        ell([p[0], p[1], -0.062], [0.055, 0.055, 0.008], {
+          col: function () {
+            return [0.7, 0.72, 0.76]
+          },
+          spec: 0.9,
+          boost: 2,
         })
       )
-      var hp = [sd * 0.097, 0.95, 0],
-        kn = [sd * 0.1, 0.52, 0.012],
-        an = [sd * 0.1, 0.085, -0.005]
-      var m3 = M(3, sd, [0.95, 0], [0.52, 0.012]),
-        m4 = M(4, sd, [0.95, 0], [0.52, 0.012])
-      prims.push(ell(hp, [0.09, 0.085, 0.09], { meta: m3, spec: 0.06, col: jean }))
-      prims.push(tube(hp, kn, 0.088, 0.058, { meta: m3, spec: 0.06, col: jean }))
-      prims.push(ell(kn, [0.058, 0.06, 0.058], { meta: m4, spec: 0.06, col: jean }))
-      prims.push(tube(kn, an, 0.058, 0.038, { meta: m4, spec: 0.06, col: jean }))
-      prims.push(
-        tube([sd * 0.1, 0.07, -0.04], [sd * 0.1, 0.045, 0.165], 0.046, 0.034, {
-          meta: m4,
-          spec: 0.25,
-          col: shoeCol,
-          boost: 1.3,
-        })
-      ) // krossovka
-      prims.push(
-        ell([sd * 0.1, 0.055, 0.15], [0.034, 0.03, 0.03], {
-          meta: m4,
-          spec: 0.25,
-          col: shoeCol,
-          boost: 1.3,
-        })
-      )
+      prims.push(ell([p[0], p[1], -0.067], [0.04, 0.04, 0.01], { col: GL, spec: 1, boost: 3 }))
     })
-    var sh = buildShape(prims, N, N, function (i, m) {
-      HB.type[i] = m.type
-      HB.side[i] = m.side
-      HB.y1[i] = m.y1
-      HB.z1[i] = m.z1
-      HB.y2[i] = m.y2
-      HB.z2[i] = m.z2
-    })
-    sh.human = HB
+    prims.push(
+      ell([-0.1, 1.56, -0.06], [0.015, 0.015, 0.006], {
+        col: function () {
+          return [1, 0.95, 0.8]
+        },
+        em: 1,
+        boost: 4,
+      })
+    ) // chaqmoq
+    prims.push(
+      disc([0, 0.95, -0.0375], 0.06, {
+        col: function () {
+          return [0.8, 0.8, 0.84]
+        },
+        spec: 0.7,
+        boost: 2,
+      })
+    ) // logotip dog'i
+    var sh = buildShape(prims, N, N)
+    sh.spin = 0.45
     return sh
   }
 
@@ -1572,84 +1452,13 @@
   }
 
   var SHAPES = [
-    { id: 'odam', label: 'Odam', build: buildHuman },
+    { id: 'telefon', label: 'Telefon', build: buildPhone },
     { id: 'kod', label: 'Kod', build: buildCode },
     { id: 'miya', label: "Sun'iy intellekt", build: buildBrain },
     { id: 'dunyo', label: 'Dunyo', build: buildGlobe },
     { id: 'raketa', label: 'Raketa', build: buildRocket },
     { id: 'dizayn', label: 'Dizayn', build: buildDesign },
   ]
-
-  /* ================= Yurish animatsiyasi (normallar ham aylanadi) ================= */
-  var ang = new Float32Array(8),
-    cs = new Float32Array(8),
-    sn = new Float32Array(8)
-  function animateHuman(sh, tp, tn, N, t, move, run, ph) {
-    var HB = sh.human,
-      rest = sh.pos,
-      rn = sh.nrm,
-      amp = (run ? 1.0 : 0.65) * move
-    var hipL = Math.sin(ph) * 0.75 * amp,
-      hipR = -hipL
-    var kneeL = -Math.max(0, Math.cos(ph)) * amp - 0.04,
-      kneeR = -Math.max(0, -Math.cos(ph)) * amp - 0.04
-    var breath = Math.sin(t * 1.8) * 0.03 * (1 - Math.min(move, 1)),
-      elb = 0.22 + 0.55 * amp
-    ang[0] = -hipL * 0.8 + breath
-    ang[1] = -hipR * 0.8 - breath
-    ang[2] = elb
-    ang[3] = elb
-    ang[4] = hipL
-    ang[5] = hipR
-    ang[6] = kneeL
-    ang[7] = kneeR
-    for (var a = 0; a < 8; a++) {
-      cs[a] = Math.cos(ang[a])
-      sn[a] = Math.sin(ang[a])
-    }
-    for (var i = 0; i < N; i++) {
-      var i3 = i * 3,
-        ty = HB.type[i],
-        x = rest[i3],
-        y = rest[i3 + 1],
-        z = rest[i3 + 2],
-        nx = rn[i3],
-        ny = rn[i3 + 1],
-        nz = rn[i3 + 2],
-        q
-      if (ty !== 0) {
-        var s = HB.side[i] < 0 ? 0 : 1,
-          y1 = HB.y1[i],
-          z1 = HB.z1[i]
-        if (ty === 2 || ty === 4) {
-          var ai = (ty === 2 ? 2 : 6) + s,
-            y2 = HB.y2[i],
-            z2 = HB.z2[i],
-            dy = y - y2,
-            dz = z - z2
-          y = dy * cs[ai] + dz * sn[ai] + y2
-          z = -dy * sn[ai] + dz * cs[ai] + z2
-          q = ny * cs[ai] + nz * sn[ai]
-          nz = -ny * sn[ai] + nz * cs[ai]
-          ny = q
-        }
-        var aj = (ty <= 2 ? 0 : 4) + s,
-          ey = y - y1,
-          ez = z - z1
-        y = ey * cs[aj] + ez * sn[aj] + y1
-        z = -ey * sn[aj] + ez * cs[aj] + z1
-        q = ny * cs[aj] + nz * sn[aj]
-        nz = -ny * sn[aj] + nz * cs[aj]
-        ny = q
-      }
-      tp[i3] = x
-      tp[i3 + 1] = y
-      tp[i3 + 2] = z
-      tn[i3] = nx
-      tn[i3 + 1] = ny
-      tn[i3 + 2] = nz
-    }
-  }
 
   /* ================= Shaderlar: real vaqtli yoritish ================= */
   var VERT = [
@@ -1716,14 +1525,14 @@
   /* ================= Komponent ================= */
   var CSS = [
     ':host{display:block;position:relative;width:100%;height:100%;min-height:320px;overflow:hidden;outline:none;',
-    '  background:var(--mh-bg,#070912);color:var(--mh-text,#e8ecff);--a:var(--mh-accent,#5ef2ff);',
+    '  background:var(--mh-bg,transparent);color:var(--mh-text,#e8ecff);--a:var(--mh-accent,#5ef2ff);',
     '  font-family:var(--mh-font,"Syne","Trebuchet MS",system-ui,sans-serif);-webkit-user-select:none;user-select:none}',
     'canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}',
     'canvas:active{cursor:grabbing}',
     '.name{position:absolute;left:clamp(14px,3vw,28px);bottom:clamp(16px,3vw,28px);width:min(380px,60%);pointer-events:none}',
     '.name b{display:block;font-weight:800;font-size:clamp(28px,5vw,52px);line-height:1;letter-spacing:-.02em;margin-bottom:12px}',
-    ':host([theme="mono-dark"]){background:var(--mh-bg,#000);color:var(--mh-text,#fff);--a:var(--mh-accent,#fff)}',
-    ':host([theme="mono-light"]){background:var(--mh-bg,#fff);color:var(--mh-text,#0a0a0a);--a:var(--mh-accent,#0a0a0a)}',
+    ':host([theme="mono-dark"]){background:var(--mh-bg,transparent);color:var(--mh-text,#fff);--a:var(--mh-accent,#fff)}',
+    ':host([theme="mono-light"]){background:var(--mh-bg,transparent);color:var(--mh-text,#0a0a0a);--a:var(--mh-accent,#0a0a0a)}',
     '.bar{position:relative;height:2px;border-radius:2px;overflow:hidden}',
     '.bar::before{content:"";position:absolute;inset:0;background:currentColor;opacity:.16}',
     '.bar i{position:relative;display:block;height:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,var(--a),#ff5fb0)}',
@@ -1762,6 +1571,7 @@
     connectedCallback() {
       if (this._started) return
       this._started = true
+      if (!this.hasAttribute('theme')) this.setAttribute('theme', 'mono-dark')
       if (!this.shadowRoot) this.attachShadow({ mode: 'open' })
       var self = this
       loadThree()
@@ -1796,7 +1606,7 @@
     }
     _applyTheme() {
       var THREE = window.THREE,
-        th = this.getAttribute('theme') || 'color'
+        th = this.getAttribute('theme') || 'mono-dark'
       var mono = th === 'mono-dark' || th === 'mono-light',
         light = th === 'mono-light'
       this._floorMat.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending
@@ -1828,6 +1638,7 @@
       var self = this,
         THREE = window.THREE,
         root = this.shadowRoot
+      this._move = this.getAttribute('controls') === 'true'
       this._interval = parseFloat(this.getAttribute('interval')) || 10
       this._auto = this.getAttribute('auto') !== 'false'
       var labels = this.getAttribute('labels') !== 'false'
@@ -1845,7 +1656,7 @@
         (labels
           ? '<div class="name"><b></b><div class="bar"><i></i></div></div><div class="dots" role="group" aria-label="Shakllar"></div>'
           : '') +
-        '<div class="hint">W A S D yurish · Shift yugurish · Space keyingi shakl · sudrab aylantiring</div><div class="joy"><i></i></div>'
+        '<div class="hint">Sudrab aylantiring · Space — keyingi shakl</div><div class="joy"><i></i></div>'
       var canvas = (this._canvas = root.querySelector('canvas'))
       this._nameEl = root.querySelector('.name b')
       this._fillEl = root.querySelector('.bar i')
@@ -1864,7 +1675,7 @@
         })
         this._dotEls = dots.children
       }
-      if (this.getAttribute('controls') !== 'false') root.querySelector('.joy').classList.add('on')
+      if (this._move) root.querySelector('.joy').classList.add('on')
 
       var renderer = (this._renderer = new THREE.WebGLRenderer({
         canvas: canvas,
@@ -1962,6 +1773,7 @@
       this._floor.frustumCulled = false
       this._floor.renderOrder = 1
       scene.add(this._floor)
+      this._floor.visible = this.hasAttribute('floor')
       this._applyTheme()
 
       this._pos = new THREE.Vector3()
@@ -2171,6 +1983,10 @@
 
       var ix = (K['d'] || K['arrowright'] ? 1 : 0) - (K['a'] || K['arrowleft'] ? 1 : 0) + J.x
       var iz = (K['w'] || K['arrowup'] ? 1 : 0) - (K['s'] || K['arrowdown'] ? 1 : 0) + J.y
+      if (!this._move) {
+        ix = 0
+        iz = 0
+      }
       var il = Math.hypot(ix, iz)
       if (il > 1) {
         ix /= il
@@ -2208,11 +2024,8 @@
 
       var sh = this._shape(this._idx),
         tp = this._target,
-        tn = this._targetN,
-        human = sh.id === 'odam'
-      if (human) {
-        animateHuman(sh, tp, tn, N, t, move, run, this._walk)
-      } else {
+        tn = this._targetN
+      {
         var a = sh.mode === 'sway' ? Math.sin(t * 0.6) * 0.55 : t * (sh.spin || 0.5)
         sh.curA = a
         if (sh.dyn) for (i = sh.dynStart; i < N; i++) sh.dyn(i, t)
@@ -2298,10 +2111,10 @@
       u1.uMorph.value = u2.uMorph.value = morphGlow
       u1.uSize.value = u2.uSize.value = this._sz
 
-      var bob = human ? Math.abs(Math.sin(this._walk)) * 0.04 * move : Math.sin(t * 1.3) * 0.03
+      var bob = Math.sin(t * 1.3) * 0.03
       this._group.position.set(this._pos.x, bob, this._pos.z)
       this._group.rotation.y = this._yaw
-      this._group.rotation.x = human ? 0.05 * clamp(this._speed / 4.6, 0, 1) : 0
+      this._group.rotation.x = 0
       var fu = this._floorMat.uniforms
       fu.uOrigin.value.set(
         Math.round(this._pos.x / 0.45) * 0.45,
