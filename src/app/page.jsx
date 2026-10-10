@@ -316,10 +316,8 @@ export default function HomePage() {
 
           {/* Right: Portrait & Status Badge */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-end gap-6">
-            
-            </div>
-
             {/* Quick action buttons (CV Download, About Link) */}
+            <MorphHuman />
             <div className="hero-meta flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full">
               <Link
                 href="/about"
